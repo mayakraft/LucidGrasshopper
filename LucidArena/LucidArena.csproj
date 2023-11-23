@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <Version>1.0</Version>
+    <Title>LucidArena</Title>
+    <Description>Description of LucidArena</Description>
+    <TargetExt>.gha</TargetExt>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="Grasshopper" Version="7.13.21348.13001" IncludeAssets="compile;build" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Reference Include="ArenaNET_v140">
+      <HintPath>..\..\..\Program Files\Lucid Vision Labs\Arena SDK\x64Release\ArenaNET_v140.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>
