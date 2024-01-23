@@ -1,4 +1,5 @@
-﻿using Grasshopper.Kernel;
+﻿using ArenaNET;
+using Grasshopper.Kernel;
 using Rhino.Geometry;
 using System;
 using System.Collections.Generic;
@@ -53,20 +54,38 @@ namespace LucidArena
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             bool snapPhoto = false;
-            double deviceNumber = -1;
+            double deviceNumberInput = -1;
             List<string> result = new List<string>();
             DA.GetData(0, ref snapPhoto);
-            DA.GetData(1, ref deviceNumber);
+            DA.GetData(1, ref deviceNumberInput);
+            int deviceNumber = (int)deviceNumberInput;
             result.Add($"device number {deviceNumber}");
+
             try
             {
-                result.Add(LucidData.GetImagesAsBitmap());
+                var device = LucidManager.devices[deviceNumber];
+                // prepare example
+                device.StartStream();
+                ArenaNET.IImage image = device.GetImage(2000);
+                TritonDevice.SaveImage(image);
+                // clean up example
+                device.RequeueBuffer(image);
+                device.StopStream();
             }
-            catch (Exception error)
+            catch (Exception ex)
             {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, error.ToString());
-                DA.AbortComponentSolution();
+                Console.WriteLine("\nException thrown: {0}", ex.Message);
             }
+
+            //try
+            //{
+            //    result.Add(LucidData.GetImagesAsBitmap());
+            //}
+            //catch (Exception error)
+            //{
+            //    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, error.ToString());
+            //    DA.AbortComponentSolution();
+            //}
             DA.SetData(0, string.Join("\n", result));
         }
 

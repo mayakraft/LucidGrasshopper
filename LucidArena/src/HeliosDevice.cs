@@ -62,14 +62,9 @@ namespace LucidArena
             }
 
             // check if Helios2 camera used for the example
-            bool isHelios2 = false;
             var deviceModelNameNode = (ArenaNET.IString)device.NodeMap.GetNode("DeviceModelName");
             String deviceModelName = deviceModelNameNode.Value;
-            if (deviceModelName.StartsWith("HLT") || deviceModelName.StartsWith("HTP"))
-            {
-                isHelios2 = true;
-            }
-
+            bool isHelios2 = deviceModelName.StartsWith("HLT") || deviceModelName.StartsWith("HTP");
 
             // Get node values that will be changed in order to return their values at
             //    the end of the example
