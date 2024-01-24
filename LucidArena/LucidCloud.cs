@@ -57,35 +57,25 @@ namespace LucidArena
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             var snapPhoto = false;
-            var info = new List<string>();
             var points = new List<Point3d>();
             var colors = new List<Color4f>();
-            
+            List<string> result = new List<string>();
+
             DA.GetData(0, ref snapPhoto);
-            
-            var heliosDevices = LucidManager.devices.Where(device => {
-                String deviceModelName = ((ArenaNET.IString)device.NodeMap.GetNode("DeviceModelName")).Value;
-                return deviceModelName.StartsWith("HLT") || deviceModelName.StartsWith("HTP");
-            }).ToList();
-            
-            if (heliosDevices.Count == 0)
-            {
-                DA.SetData(0, "No Helios depth camera found.");
-                DA.SetDataList(1, points);
-                DA.SetDataList(2, colors);
-                return;
-            }
 
             try
             {
-                (points, _) = HeliosDevice.GetPointCloud(heliosDevices[0]);
+                if (LucidManager.devices.Count == 0) throw new Exception("no available devices");
+                (points, _) = HeliosDevice.GetPointCloud(LucidManager.GetHeliosDevice());
             }
             catch (Exception error)
             {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, error.ToString());
-                DA.AbortComponentSolution();
+                // AddRuntimeMessage(GH_RuntimeMessageLevel.Error, error.ToString());
+                // DA.AbortComponentSolution();
+                result.Add($"unsuccessful: {error.Message}");
             }
-            DA.SetData(0, string.Empty);
+
+            DA.SetData(0, string.Join("\n", result));
             DA.SetDataList(1, points);
             DA.SetDataList(2, colors);
         }

@@ -14,6 +14,9 @@ namespace LucidArena
 {
     public class LucidCamera : GH_Component
     {
+        // image timeout (milliseconds)
+        const UInt32 TIMEOUT = 2000;
+
         /// <summary>
         /// Each implementation of GH_Component must provide a public 
         /// constructor without any arguments.
@@ -67,6 +70,7 @@ namespace LucidArena
             {
                 if (userfilepath == string.Empty) throw new Exception("required path to a new .PNG");
                 if (LucidManager.devices.Count == 0) throw new Exception("no available devices");
+                if (Path.GetExtension(userfilepath) != ".png") result.Add("expecting .png file type");
 
                 var device = deviceNumberInput == -1
                     ? LucidManager.GetTritonDevice()
@@ -74,8 +78,14 @@ namespace LucidArena
 
                 // prepare
                 device.StartStream();
-                ArenaNET.IImage image = device.GetImage(2000);
-                TritonDevice.SaveImage(image, userfilepath);
+                ArenaNET.IImage image = device.GetImage(TIMEOUT);
+
+                // save file
+                if (!Directory.Exists(Path.GetDirectoryName(userfilepath)))
+                {
+                    Directory.CreateDirectory(Path.GetDirectoryName(userfilepath));
+                }
+                image.Bitmap.Save(userfilepath, System.Drawing.Imaging.ImageFormat.Png);
 
                 // clean up
                 device.RequeueBuffer(image);

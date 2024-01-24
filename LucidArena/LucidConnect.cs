@@ -17,7 +17,7 @@ namespace LucidArena
         /// new tabs/panels will automatically be created.
         /// </summary>
         public LucidConnect()
-          : base("LucidConnect", "LucidConnect",
+          : base("Lucid Connect", "Connect",
             "Connect to a Lucid Camera Device",
             "Lucid", "Subcategory")
         {
