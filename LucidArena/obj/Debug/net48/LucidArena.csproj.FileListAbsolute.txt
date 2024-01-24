@@ -21,3 +21,4 @@ C:\Code\LucidArena\LucidArena\obj\Debug\net48\LucidArena.csproj.CopyComplete
 C:\Code\LucidArena\LucidArena\obj\Debug\net48\LucidArena.gha
 C:\Code\LucidArena\LucidArena\obj\Debug\net48\LucidArena.pdb
 C:\Code\LucidArena\LucidArena\obj\Debug\net48\LucidArena.sourcelink.json
+C:\Code\LucidArena\LucidArena\bin\Debug\net48\SaveNET_v140.dll

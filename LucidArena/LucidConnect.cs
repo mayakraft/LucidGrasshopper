@@ -3,6 +3,7 @@ using Grasshopper.Kernel;
 using Rhino.Geometry;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace LucidArena
 {
@@ -27,10 +28,10 @@ namespace LucidArena
         /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddBooleanParameter("Active", "Active", "Allow the system to connect to devices (default: true)", GH_ParamAccess.item);
-            pManager.AddNumberParameter("Device Number", "Device", "Which camera device are we reading from?", GH_ParamAccess.item);
+            pManager.AddBooleanParameter("Active", "Active", "Allow the system to connect to devices (default: false)", GH_ParamAccess.item);
+            // pManager.AddNumberParameter("Device Number", "Device", "Which camera device are we reading from?", GH_ParamAccess.item);
             pManager[0].Optional = true;
-            pManager[1].Optional = true;
+            // pManager[1].Optional = true;
         }
 
         /// <summary>
@@ -38,7 +39,8 @@ namespace LucidArena
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddTextParameter("Status", "Status", "Device Connection Information", GH_ParamAccess.item);
+            pManager.AddTextParameter("Status", "Status", "System Connection Information", GH_ParamAccess.item);
+            pManager.AddTextParameter("Devices", "Devices", "List of available devices", GH_ParamAccess.list);
         }
 
         private string TryInit()
@@ -62,13 +64,17 @@ namespace LucidArena
         /// to store data in output parameters.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            bool active = true;
+            bool active = false;
             DA.GetData(0, ref active);
             List<string> messages = new List<string>();
+            List<string> deviceNames = new List<string>();
             try
             {
                 messages.Add(active ? TryInit() : TryDeinit());
                 messages.Add($"Connected to {LucidManager.ConnectAllDevices()} devices");
+                deviceNames = LucidManager.devices
+                    .Select(device => ((ArenaNET.IString)device.NodeMap.GetNode("DeviceModelName")).Value)
+                    .ToList();
             }
             catch (Exception error)
             {
@@ -76,6 +82,7 @@ namespace LucidArena
                 DA.AbortComponentSolution();
             }
             DA.SetData(0, string.Join("\n", messages));
+            DA.SetDataList(1, deviceNames);
         }
 
         /// <summary>

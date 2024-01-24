@@ -83,5 +83,25 @@ namespace LucidArena
                 return;
             }
         }
+
+        public static List<ArenaNET.IDevice> GetTritonDevices() => devices
+            .Where(device => ((ArenaNET.IString)device.NodeMap.GetNode("DeviceModelName")).Value.StartsWith("TRI"))
+            .ToList();
+
+        public static ArenaNET.IDevice GetTritonDevice() => devices
+            .First(device => ((ArenaNET.IString)device.NodeMap.GetNode("DeviceModelName")).Value.StartsWith("TRI"));
+
+        public static List<ArenaNET.IDevice> GetHeliosDevices() => devices
+            .Where(device => {
+                String deviceModelName = ((ArenaNET.IString)device.NodeMap.GetNode("DeviceModelName")).Value;
+                return deviceModelName.StartsWith("HLT") || deviceModelName.StartsWith("HTP");
+            }).ToList();
+
+        public static ArenaNET.IDevice GetHeliosDevice() => devices
+            .First(device => {
+                String deviceModelName = ((ArenaNET.IString)device.NodeMap.GetNode("DeviceModelName")).Value;
+                return deviceModelName.StartsWith("HLT") || deviceModelName.StartsWith("HTP");
+            });
+
     }
 }

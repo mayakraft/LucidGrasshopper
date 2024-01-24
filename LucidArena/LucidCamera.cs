@@ -3,6 +3,7 @@ using Grasshopper.Kernel;
 using Rhino.Geometry;
 using System;
 using System.Collections.Generic;
+using System.IO;
 
 // In order to load the result of this wizard, you will also need to
 // add the output bin/ folder of this project to the list of loaded
@@ -33,9 +34,10 @@ namespace LucidArena
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddBooleanParameter("Snap Photo", "Snap", "Toggle input to take a photo", GH_ParamAccess.item);
-            pManager.AddNumberParameter("Device Number", "Device", "Which camera device are we reading from?", GH_ParamAccess.item);
+            pManager.AddTextParameter("File Path", "Path", "Location of the .PNG file", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Device Number", "Device", "Leave empty for automatic device selection, or specify device number to override", GH_ParamAccess.item);
             pManager[0].Optional = true;
-            pManager[1].Optional = true;
+            pManager[2].Optional = true;
         }
 
         /// <summary>
@@ -43,7 +45,7 @@ namespace LucidArena
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddTextParameter("Status", "Status", "Device Connection Information", GH_ParamAccess.item);
+            pManager.AddTextParameter("Status", "Status", "Information", GH_ParamAccess.item);
         }
 
         /// <summary>
@@ -54,38 +56,37 @@ namespace LucidArena
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             bool snapPhoto = false;
+            string userfilepath = string.Empty;
             double deviceNumberInput = -1;
             List<string> result = new List<string>();
             DA.GetData(0, ref snapPhoto);
-            DA.GetData(1, ref deviceNumberInput);
-            int deviceNumber = (int)deviceNumberInput;
-            result.Add($"device number {deviceNumber}");
+            DA.GetData(1, ref userfilepath);
+            DA.GetData(2, ref deviceNumberInput);
 
             try
             {
-                var device = LucidManager.devices[deviceNumber];
-                // prepare example
+                if (userfilepath == string.Empty) throw new Exception("required path to a new .PNG");
+                if (LucidManager.devices.Count == 0) throw new Exception("no available devices");
+
+                var device = deviceNumberInput == -1
+                    ? LucidManager.GetTritonDevice()
+                    : LucidManager.devices[(int)deviceNumberInput];
+
+                // prepare
                 device.StartStream();
                 ArenaNET.IImage image = device.GetImage(2000);
-                TritonDevice.SaveImage(image);
-                // clean up example
+                TritonDevice.SaveImage(image, userfilepath);
+
+                // clean up
                 device.RequeueBuffer(image);
                 device.StopStream();
+                result.Add($"capture successful: {userfilepath}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine("\nException thrown: {0}", ex.Message);
+                result.Add($"unsuccessful: {ex.Message}");
             }
 
-            //try
-            //{
-            //    result.Add(LucidData.GetImagesAsBitmap());
-            //}
-            //catch (Exception error)
-            //{
-            //    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, error.ToString());
-            //    DA.AbortComponentSolution();
-            //}
             DA.SetData(0, string.Join("\n", result));
         }
 

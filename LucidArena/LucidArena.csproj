@@ -16,6 +16,9 @@
     <Reference Include="ArenaNET_v140">
       <HintPath>..\..\..\Program Files\Lucid Vision Labs\Arena SDK\x64Release\ArenaNET_v140.dll</HintPath>
     </Reference>
+    <Reference Include="SaveNET_v140">
+      <HintPath>..\..\..\Program Files\Lucid Vision Labs\Arena SDK\x64Release\SaveNET_v140.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>
