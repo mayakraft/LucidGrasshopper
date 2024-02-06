@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyDescriptionAttribute("Description of LucidArena")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0+0ce69b7eb3e9c685d8daaddf3e3d22b1881a8f72")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0+460c83712477820de43df90aa8cd7e29aa5c9766")]
 [assembly: System.Reflection.AssemblyProductAttribute("LucidArena")]
 [assembly: System.Reflection.AssemblyTitleAttribute("LucidArena")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
