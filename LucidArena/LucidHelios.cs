@@ -36,7 +36,13 @@ namespace LucidArena
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddBooleanParameter("Snap Cloud", "Snap", "Toggle input to capture the point cloud", GH_ParamAccess.item);
+            pManager.AddIntervalParameter("Filter X Range", "X Range", "Filter to include only points within this range", GH_ParamAccess.item);
+            pManager.AddIntervalParameter("Filter Y Range", "Y Range", "Filter to include only points within this range", GH_ParamAccess.item);
+            pManager.AddIntervalParameter("Filter Z Range", "Z Range", "Filter to include only points within this range", GH_ParamAccess.item);
             pManager[0].Optional = true;
+            pManager[1].Optional = true;
+            pManager[2].Optional = true;
+            pManager[3].Optional = true;
         }
 
         /// <summary>
@@ -57,11 +63,17 @@ namespace LucidArena
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             var snapPhoto = false;
+            var xInterval = Interval.Unset;
+            var yInterval = Interval.Unset;
+            var zInterval = Interval.Unset;
             var info = new List<string>();
             var points = new List<Point3d>();
             var intensities = new List<int>();
 
             DA.GetData(0, ref snapPhoto);
+            DA.GetData(1, ref xInterval);
+            DA.GetData(2, ref yInterval);
+            DA.GetData(3, ref zInterval);
 
             var heliosDevices = LucidManager.devices.Where(device => {
                 String deviceModelName = ((ArenaNET.IString)device.NodeMap.GetNode("DeviceModelName")).Value;
@@ -85,6 +97,25 @@ namespace LucidArena
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, error.ToString());
                 DA.AbortComponentSolution();
             }
+
+            // if the interval is valid, the user has connected an interval to the component input
+            // filter the output data.
+            if (xInterval.IsValid)
+            {
+                intensities = intensities.Where((_, i) => xInterval.IncludesParameter(points[i].X)).ToList();
+                points = points.Where(point => xInterval.IncludesParameter(point.X)).ToList();
+            }
+            if (yInterval.IsValid)
+            {
+                intensities = intensities.Where((_, i) => yInterval.IncludesParameter(points[i].Y)).ToList();
+                points = points.Where(point => yInterval.IncludesParameter(point.Y)).ToList();
+            }
+            if (zInterval.IsValid)
+            {
+                intensities = intensities.Where((_, i) => zInterval.IncludesParameter(points[i].Z)).ToList();
+                points = points.Where(point => zInterval.IncludesParameter(point.Z)).ToList();
+            }
+
             DA.SetData(0, string.Empty);
             DA.SetDataList(1, points);
             DA.SetDataList(2, intensities);

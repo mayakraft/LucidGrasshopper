@@ -9,10 +9,6 @@ namespace LucidArena
 {
     internal class HeliosDevice
     {
-
-        // file name
-        const String FILE_NAME = "Cs_Helios_MinMaxDepth.ply";
-
         // pixel format
         const String PIXEL_FORMAT = "Coord3D_ABCY16";
 
@@ -242,39 +238,33 @@ namespace LucidArena
                     ushort intensity = BitConverter.ToUInt16(data, index + 6);
 
 
-                    // if z is less than max value, as invalid values get
-                    // filtered to 65535
-                    if (z < 65535)
+                    // Convert x, y and z to millimeters
+                    //    Using each coordinates' appropriate scales, convert
+                    //    x, y and z values to mm. For the x and y
+                    //    coordinates in an unsigned pixel format, we must
+                    //    then add the offset to our converted values in
+                    //    order to get the correct position in millimeters.
+                    x = (ushort)(x * scaleX + offsetX);
+                    y = (ushort)(y * scaleY + offsetY);
+                    z = (ushort)(z * scaleZ);
+
+                    if (z < minDepth.z && z > 0)
                     {
-                        // Convert x, y and z to millimeters
-                        //    Using each coordinates' appropriate scales, convert
-                        //    x, y and z values to mm. For the x and y
-                        //    coordinates in an unsigned pixel format, we must
-                        //    then add the offset to our converted values in
-                        //    order to get the correct position in millimeters.
-                        x = (ushort)(x * scaleX + offsetX);
-                        y = (ushort)(y * scaleY + offsetY);
-                        z = (ushort)(z * scaleZ);
-
-                        if (z < minDepth.z && z > 0)
-                        {
-                            minDepth.x = (short)x;
-                            minDepth.y = (short)y;
-                            minDepth.z = (short)z;
-                            minDepth.intensity = (short)intensity;
-                        }
-                        else if (z > maxDepth.z)
-                        {
-                            maxDepth.x = (short)x;
-                            maxDepth.y = (short)y;
-                            maxDepth.z = (short)z;
-                            maxDepth.intensity = (short)intensity;
-                        }
-                        
-                        points.Add(new Point3d(x, y, z));
-                        intensities.Add(intensity);
-
+                        minDepth.x = (short)x;
+                        minDepth.y = (short)y;
+                        minDepth.z = (short)z;
+                        minDepth.intensity = (short)intensity;
                     }
+                    else if (z > maxDepth.z)
+                    {
+                        maxDepth.x = (short)x;
+                        maxDepth.y = (short)y;
+                        maxDepth.z = (short)z;
+                        maxDepth.intensity = (short)intensity;
+                    }
+                        
+                    points.Add(new Point3d(x, y, z));
+                    intensities.Add(intensity);
 
                     index += (int)srcPixelSize;
                 }
