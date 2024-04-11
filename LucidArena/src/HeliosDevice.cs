@@ -232,10 +232,10 @@ namespace LucidArena
                     //    coordinate and the fourth channel is intensity. We
                     //    offset pIn by 2 for each channel because pIn is an 8
                     //    bit integer and we want to read it as a 16 bit integer.
-                    ushort x = BitConverter.ToUInt16(data, index);
-                    ushort y = BitConverter.ToUInt16(data, index + 2);
-                    ushort z = BitConverter.ToUInt16(data, index + 4);
-                    ushort intensity = BitConverter.ToUInt16(data, index + 6);
+                    short x = BitConverter.ToInt16(data, index);
+                    short y = BitConverter.ToInt16(data, index + 2);
+                    short z = BitConverter.ToInt16(data, index + 4);
+                    short intensity = BitConverter.ToInt16(data, index + 6);
 
 
                     // Convert x, y and z to millimeters
@@ -244,9 +244,12 @@ namespace LucidArena
                     //    coordinates in an unsigned pixel format, we must
                     //    then add the offset to our converted values in
                     //    order to get the correct position in millimeters.
-                    x = (ushort)(x * scaleX + offsetX);
-                    y = (ushort)(y * scaleY + offsetY);
-                    z = (ushort)(z * scaleZ);
+                    //x = (ushort)(x * scaleX + offsetX);
+                    //y = (ushort)(y * scaleY + offsetY);
+                    //z = (ushort)(z * scaleZ);
+                    x = (short)(x * scaleX);
+                    y = (short)(y * scaleY);
+                    z = (short)(z * scaleZ);
 
                     if (z < minDepth.z && z > 0)
                     {
