@@ -66,6 +66,36 @@ namespace LucidArena
             return (points, intensities);
         }
 
+        public static (List<Point3d> points, List<int> intensities) GetPointCloudUnsignedRawAndFiltered(
+            byte[] data,
+            UInt32 size,
+            int srcPixelSize)
+        {
+            var points = new List<Point3d>();
+            var intensities = new List<int>();
+            int index = 0;
+            for (int i = 0; i < size; i++)
+            {
+                // Extract point data to signed 16 bit integer
+                //    The first channel is the x coordinate, second channel
+                //    is the y coordinate, the third channel is the z
+                //    coordinate and the fourth channel is intensity. We
+                //    offset pIn by 2 for each channel because pIn is an 8
+                //    bit integer and we want to read it as a 16 bit integer.
+                ushort x = BitConverter.ToUInt16(data, index);
+                ushort y = BitConverter.ToUInt16(data, index + 2);
+                ushort z = BitConverter.ToUInt16(data, index + 4);
+                ushort intensity = BitConverter.ToUInt16(data, index + 6);
+                if (z < 65535)
+                {
+                    points.Add(new Point3d(x, y, z));
+                    intensities.Add(intensity);
+                }
+                index += srcPixelSize;
+            }
+            return (points, intensities);
+        }
+
         public static (List<Point3d> points, List<int> intensities) GetPointCloudSigned1(
             byte[] data,
             UInt32 size,
@@ -469,24 +499,27 @@ namespace LucidArena
                     (points, intensities) = GetPointCloudUnsignedRaw(data, size, srcPixelSize);
                     break;
                 case 1:
-                    (points, intensities) = GetPointCloudSignedRaw(data, size, srcPixelSize);
+                    (points, intensities) = GetPointCloudUnsignedRawAndFiltered(data, size, srcPixelSize);
                     break;
                 case 2:
-                    (points, intensities) = GetPointCloudSigned1(data, size, srcPixelSize, scaleX, scaleY, scaleZ);
+                    (points, intensities) = GetPointCloudSignedRaw(data, size, srcPixelSize);
                     break;
                 case 3:
-                    (points, intensities) = GetPointCloudUnsigned1(data, size, srcPixelSize, scaleX, scaleY, scaleZ, offsetX, offsetY);
+                    (points, intensities) = GetPointCloudSigned1(data, size, srcPixelSize, scaleX, scaleY, scaleZ);
                     break;
                 case 4:
-                    (points, intensities) = GetPointCloudSigned2(data, size, srcPixelSize, scaleX, scaleY, scaleZ);
+                    (points, intensities) = GetPointCloudUnsigned1(data, size, srcPixelSize, scaleX, scaleY, scaleZ, offsetX, offsetY);
                     break;
                 case 5:
-                    (points, intensities) = GetPointCloudUnsigned2(data, size, srcPixelSize, scaleX, scaleY, scaleZ, offsetX, offsetY);
+                    (points, intensities) = GetPointCloudSigned2(data, size, srcPixelSize, scaleX, scaleY, scaleZ);
                     break;
                 case 6:
-                    (points, intensities) = GetPointCloudUnsigned3(data, size, srcPixelSize, scaleX, scaleY, scaleZ, offsetX, offsetY);
+                    (points, intensities) = GetPointCloudUnsigned2(data, size, srcPixelSize, scaleX, scaleY, scaleZ, offsetX, offsetY);
                     break;
                 case 7:
+                    (points, intensities) = GetPointCloudUnsigned3(data, size, srcPixelSize, scaleX, scaleY, scaleZ, offsetX, offsetY);
+                    break;
+                case 8:
                     (points, intensities) = GetPointCloudUnsigned4(data, size, srcPixelSize, scaleX, scaleY, scaleZ, offsetX, offsetY);
                     break;
                 default:
