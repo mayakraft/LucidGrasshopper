@@ -39,10 +39,12 @@ namespace LucidArena
             pManager.AddIntervalParameter("Filter X Range", "X Range", "Filter to include only points within this range", GH_ParamAccess.item);
             pManager.AddIntervalParameter("Filter Y Range", "Y Range", "Filter to include only points within this range", GH_ParamAccess.item);
             pManager.AddIntervalParameter("Filter Z Range", "Z Range", "Filter to include only points within this range", GH_ParamAccess.item);
+            pManager.AddIntegerParameter("Capture Option", "Capture", "Customize byte processing", GH_ParamAccess.item);
             pManager[0].Optional = true;
             pManager[1].Optional = true;
             pManager[2].Optional = true;
             pManager[3].Optional = true;
+            pManager[4].Optional = true;
         }
 
         /// <summary>
@@ -63,6 +65,7 @@ namespace LucidArena
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             var snapPhoto = false;
+            var option = 0;
             var xInterval = Interval.Unset;
             var yInterval = Interval.Unset;
             var zInterval = Interval.Unset;
@@ -74,6 +77,7 @@ namespace LucidArena
             DA.GetData(1, ref xInterval);
             DA.GetData(2, ref yInterval);
             DA.GetData(3, ref zInterval);
+            DA.GetData(4, ref option);
 
             var heliosDevices = LucidManager.devices.Where(device => {
                 String deviceModelName = ((ArenaNET.IString)device.NodeMap.GetNode("DeviceModelName")).Value;
@@ -90,7 +94,7 @@ namespace LucidArena
 
             try
             {
-                (points, intensities) = HeliosDevice.GetPointCloud(heliosDevices[0]);
+                (points, intensities) = HeliosDevice.GetPointCloud(heliosDevices[0], option);
             }
             catch (Exception error)
             {
