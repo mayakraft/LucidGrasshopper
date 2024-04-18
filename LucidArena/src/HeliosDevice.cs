@@ -241,6 +241,106 @@ namespace LucidArena
             return (points, intensities);
         }
 
+        public static (List<Point3d> points, List<int> intensities) GetPointCloudUnsigned3(
+            byte[] data,
+            UInt32 size,
+            int srcPixelSize,
+            float scaleX,
+            float scaleY,
+            float scaleZ,
+            float offsetX,
+            float offsetY)
+        {
+            var points = new List<Point3d>();
+            var intensities = new List<int>();
+            int index = 0;
+            for (int i = 0; i < size; i++)
+            {
+                // Extract point data to signed 16 bit integer
+                //    The first channel is the x coordinate, second channel
+                //    is the y coordinate, the third channel is the z
+                //    coordinate and the fourth channel is intensity. We
+                //    offset pIn by 2 for each channel because pIn is an 8
+                //    bit integer and we want to read it as a 16 bit integer.
+                ushort x = BitConverter.ToUInt16(data, index);
+                ushort y = BitConverter.ToUInt16(data, index + 2);
+                ushort z = BitConverter.ToUInt16(data, index + 4);
+                ushort intensity = BitConverter.ToUInt16(data, index + 6);
+
+                float _x, _y, _z;
+
+                // if z is less than max value, as invalid values get
+                // filtered to 65535
+                if (z < 65535)
+                {
+                    // Convert x, y and z to millimeters
+                    //    Using each coordinates' appropriate scales, convert
+                    //    x, y and z values to mm. For the x and y
+                    //    coordinates in an unsigned pixel format, we must
+                    //    then add the offset to our converted values in
+                    //    order to get the correct position in millimeters.
+                    _x = x * scaleX;
+                    _y = y * scaleY;
+                    _z = z * scaleZ;
+                    points.Add(new Point3d(_x, _y, _z));
+                    intensities.Add(intensity);
+                }
+
+                index += srcPixelSize;
+            }
+            return (points, intensities);
+        }
+
+        public static (List<Point3d> points, List<int> intensities) GetPointCloudUnsigned4(
+            byte[] data,
+            UInt32 size,
+            int srcPixelSize,
+            float scaleX,
+            float scaleY,
+            float scaleZ,
+            float offsetX,
+            float offsetY)
+        {
+            var points = new List<Point3d>();
+            var intensities = new List<int>();
+            int index = 0;
+            for (int i = 0; i < size; i++)
+            {
+                // Extract point data to signed 16 bit integer
+                //    The first channel is the x coordinate, second channel
+                //    is the y coordinate, the third channel is the z
+                //    coordinate and the fourth channel is intensity. We
+                //    offset pIn by 2 for each channel because pIn is an 8
+                //    bit integer and we want to read it as a 16 bit integer.
+                ushort x = BitConverter.ToUInt16(data, index);
+                ushort y = BitConverter.ToUInt16(data, index + 2);
+                ushort z = BitConverter.ToUInt16(data, index + 4);
+                ushort intensity = BitConverter.ToUInt16(data, index + 6);
+
+                float _x, _y, _z;
+
+                // if z is less than max value, as invalid values get
+                // filtered to 65535
+                if (z < 65535)
+                {
+                    // Convert x, y and z to millimeters
+                    //    Using each coordinates' appropriate scales, convert
+                    //    x, y and z values to mm. For the x and y
+                    //    coordinates in an unsigned pixel format, we must
+                    //    then add the offset to our converted values in
+                    //    order to get the correct position in millimeters.
+                    _x = x * scaleX + offsetX;
+                    _y = y * scaleY + offsetY;
+                    _z = z * scaleZ;
+                    points.Add(new Point3d(_x, _y, _z));
+                    intensities.Add(intensity);
+                }
+
+                index += srcPixelSize;
+            }
+            return (points, intensities);
+        }
+
         public static (List<Point3d> points, List<int> intensities) GetPointCloud(ArenaNET.IDevice device, int option = 0)
         {
             var points = new List<Point3d>();
@@ -382,6 +482,12 @@ namespace LucidArena
                     break;
                 case 5:
                     (points, intensities) = GetPointCloudUnsigned2(data, size, srcPixelSize, scaleX, scaleY, scaleZ, offsetX, offsetY);
+                    break;
+                case 6:
+                    (points, intensities) = GetPointCloudUnsigned3(data, size, srcPixelSize, scaleX, scaleY, scaleZ, offsetX, offsetY);
+                    break;
+                case 7:
+                    (points, intensities) = GetPointCloudUnsigned4(data, size, srcPixelSize, scaleX, scaleY, scaleZ, offsetX, offsetY);
                     break;
                 default:
                     break;
