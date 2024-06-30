@@ -1,11 +1,11 @@
 {
   "version": 2,
-  "dgSpecHash": "+uSVIgUPLZNd4KbuDWrrQHYGpH9RLmO6QwwJ680OpfIM9byQbcQQCswPUbAUrx93mC4y9uw3bvXSxKDFi9tbWQ==",
+  "dgSpecHash": "YH8eFE8R6iI=",
   "success": true,
-  "projectFilePath": "C:\\Users\\Gabriel\\Desktop\\LucidGrasshopper\\LucidArena\\LucidArena.csproj",
+  "projectFilePath": "C:\\Users\\Maya\\Code\\LucidGrasshopper\\LucidArena\\LucidArena.csproj",
   "expectedPackageFiles": [
-    "C:\\Users\\Gabriel\\.nuget\\packages\\grasshopper\\7.13.21348.13001\\grasshopper.7.13.21348.13001.nupkg.sha512",
-    "C:\\Users\\Gabriel\\.nuget\\packages\\rhinocommon\\7.13.21348.13001\\rhinocommon.7.13.21348.13001.nupkg.sha512"
+    "C:\\Users\\Maya\\.nuget\\packages\\grasshopper\\7.13.21348.13001\\grasshopper.7.13.21348.13001.nupkg.sha512",
+    "C:\\Users\\Maya\\.nuget\\packages\\rhinocommon\\7.13.21348.13001\\rhinocommon.7.13.21348.13001.nupkg.sha512"
   ],
   "logs": []
 }

@@ -1,20 +1,24 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Gabriel\\Desktop\\LucidGrasshopper\\LucidArena\\LucidArena.csproj": {}
+    "C:\\Users\\Maya\\Code\\LucidGrasshopper\\LucidArena\\LucidArena.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Gabriel\\Desktop\\LucidGrasshopper\\LucidArena\\LucidArena.csproj": {
+    "C:\\Users\\Maya\\Code\\LucidGrasshopper\\LucidArena\\LucidArena.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Gabriel\\Desktop\\LucidGrasshopper\\LucidArena\\LucidArena.csproj",
+        "projectUniqueName": "C:\\Users\\Maya\\Code\\LucidGrasshopper\\LucidArena\\LucidArena.csproj",
         "projectName": "LucidArena",
-        "projectPath": "C:\\Users\\Gabriel\\Desktop\\LucidGrasshopper\\LucidArena\\LucidArena.csproj",
-        "packagesPath": "C:\\Users\\Gabriel\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Gabriel\\Desktop\\LucidGrasshopper\\LucidArena\\obj\\",
+        "projectPath": "C:\\Users\\Maya\\Code\\LucidGrasshopper\\LucidArena\\LucidArena.csproj",
+        "packagesPath": "C:\\Users\\Maya\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Maya\\Code\\LucidGrasshopper\\LucidArena\\obj\\",
         "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+        ],
         "configFilePaths": [
-          "C:\\Users\\Gabriel\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Maya\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -22,6 +26,7 @@
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "C:\\Program Files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -34,6 +39,11 @@
           "warnAsError": [
             "NU1605"
           ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
         }
       },
       "frameworks": {
@@ -46,7 +56,7 @@
               "version": "[7.13.21348.13001, )"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.100\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.300\\RuntimeIdentifierGraph.json"
         }
       }
     }

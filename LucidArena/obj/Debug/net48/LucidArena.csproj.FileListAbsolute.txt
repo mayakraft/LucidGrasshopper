@@ -35,3 +35,16 @@ C:\Users\Gabriel\Desktop\LucidGrasshopper\LucidArena\obj\Debug\net48\LucidArena.
 C:\Users\Gabriel\Desktop\LucidGrasshopper\LucidArena\obj\Debug\net48\LucidArena.csproj.CopyComplete
 C:\Users\Gabriel\Desktop\LucidGrasshopper\LucidArena\obj\Debug\net48\LucidArena.gha
 C:\Users\Gabriel\Desktop\LucidGrasshopper\LucidArena\obj\Debug\net48\LucidArena.pdb
+C:\Users\Maya\Code\LucidGrasshopper\LucidArena\bin\Debug\net48\LucidArena.gha
+C:\Users\Maya\Code\LucidGrasshopper\LucidArena\bin\Debug\net48\LucidArena.pdb
+C:\Users\Maya\Code\LucidGrasshopper\LucidArena\bin\Debug\net48\ArenaNET_v140.dll
+C:\Users\Maya\Code\LucidGrasshopper\LucidArena\bin\Debug\net48\SaveNET_v140.dll
+C:\Users\Maya\Code\LucidGrasshopper\LucidArena\obj\Debug\net48\LucidArena.csproj.AssemblyReference.cache
+C:\Users\Maya\Code\LucidGrasshopper\LucidArena\obj\Debug\net48\LucidArena.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Maya\Code\LucidGrasshopper\LucidArena\obj\Debug\net48\LucidArena.AssemblyInfoInputs.cache
+C:\Users\Maya\Code\LucidGrasshopper\LucidArena\obj\Debug\net48\LucidArena.AssemblyInfo.cs
+C:\Users\Maya\Code\LucidGrasshopper\LucidArena\obj\Debug\net48\LucidArena.csproj.CoreCompileInputs.cache
+C:\Users\Maya\Code\LucidGrasshopper\LucidArena\obj\Debug\net48\LucidArena.sourcelink.json
+C:\Users\Maya\Code\LucidGrasshopper\LucidArena\obj\Debug\net48\LucidArena.csproj.Up2Date
+C:\Users\Maya\Code\LucidGrasshopper\LucidArena\obj\Debug\net48\LucidArena.gha
+C:\Users\Maya\Code\LucidGrasshopper\LucidArena\obj\Debug\net48\LucidArena.pdb
