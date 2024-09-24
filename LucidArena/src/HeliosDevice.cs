@@ -103,7 +103,6 @@ namespace LucidArena
             public bool spatialFilter;
             // enable confidence threshold
             public bool confidenceThreshold;
-
             public HeliosSettings(string exposureTime = "Exp1000Us", string conversionGain = "Low", int imageAccumulation = 4, bool spatialFilter = true, bool confidenceThreshold = true)
             {
                 this.exposureTime = exposureTime;
@@ -112,6 +111,11 @@ namespace LucidArena
                 this.spatialFilter = spatialFilter;
                 this.confidenceThreshold = confidenceThreshold;
             }
+            public override string ToString()
+            {
+                return $"exposure time: {this.exposureTime}\nconversion gain: {this.conversionGain}\nimage accumulation: {this.imageAccumulation}\nspatial filter: {this.spatialFilter}\nconfidence threshold: {this.confidenceThreshold}";
+            }
+
         }
 
         public static (List<Point3d> points, List<int> intensities) GetPointCloud(ArenaNET.IDevice device, HeliosSettings settings)

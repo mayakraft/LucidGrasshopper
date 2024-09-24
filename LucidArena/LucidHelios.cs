@@ -42,8 +42,8 @@ namespace LucidArena
             pManager.AddIntervalParameter("Filter Y Range", "Y Range", "Filter to include only points within this range", GH_ParamAccess.item);
             pManager.AddIntervalParameter("Filter Z Range", "Z Range", "Filter to include only points within this range", GH_ParamAccess.item);
             
-            pManager.AddIntegerParameter("Exposure Mode", "Exposure", "Set the exposure mode", GH_ParamAccess.item);
-            pManager.AddIntegerParameter("Conversion Gain", "Gain", "Set the conversion gain", GH_ParamAccess.item);
+            pManager.AddTextParameter("Exposure Mode", "Exposure", "Set the exposure mode", GH_ParamAccess.item);
+            pManager.AddTextParameter("Conversion Gain", "Gain", "Set the conversion gain", GH_ParamAccess.item);
             pManager.AddIntegerParameter("Image Accumulation", "Accumulation", "Set the image accumulation", GH_ParamAccess.item);
             
             pManager.AddBooleanParameter("Spacial Filtering", "Filtering", "Activate spacial filtering", GH_ParamAccess.item);
@@ -150,7 +150,7 @@ namespace LucidArena
                 points = points.Where(point => zInterval.IncludesParameter(point.Z)).ToList();
             }
 
-            DA.SetData(0, string.Empty);
+            DA.SetData(0, $"{settings}");
             DA.SetDataList(1, points);
             DA.SetDataList(2, intensities);
         }
