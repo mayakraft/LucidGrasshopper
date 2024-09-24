@@ -2,6 +2,7 @@
 using Rhino.Geometry;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -61,56 +62,90 @@ namespace LucidArena
             return (points, intensities);
         }
 
-        public static (List<Point3d> points, List<int> intensities) GetPointCloud(ArenaNET.IDevice device)
+        /// <summary>
+        /// Get the Helios Camera device version (1 or 2), also checking if this is even a Helios Camera device to begin with.
+        /// </summary>
+        /// <param name="device">The device in question.</param>
+        /// <returns>Returns -1 if not a Helios device. Otherwise, returns 1 or 2 depending on device version.</returns>
+        private static int GetHeliosCameraVersion(ArenaNET.IDevice device)
         {
-            var points = new List<Point3d>();
-            var intensities = new List<int>();
-
-            const UInt32 TIMEOUT = 2000;
-            const String PIXEL_FORMAT = "Coord3D_ABCY16";
-
             try
             {
-                // Validate if Scan3dCoordinateSelector node exists. If not -
-                //    probaly not Helios camera used running the example
+                // Validate if Scan3dCoordinateSelector node exists. If not -  probably not Helios camera
                 var checkScan3dCoordinateSelectorNode = (ArenaNET.IEnumeration)device.NodeMap.GetNode("Scan3dCoordinateSelector");
-            }
-            catch (Exception)
-            {
-                Console.WriteLine("Scan3dCoordinateSelector node is not found. Please make sure that Helios device is used for the example.\n");
-                return (points, intensities);
-            }
-
-            try
-            {
-                // Validate if Scan3dCoordinateOffset node exists. If not -
-                //    probaly Helios has an old firmware
+                // Validate if Scan3dCoordinateOffset node exists. If not - probably Helios has an old firmware
                 var checkScan3dCoordinateOffset = (ArenaNET.IFloat)device.NodeMap.GetNode("Scan3dCoordinateOffset");
             }
             catch (Exception)
             {
-                Console.WriteLine("Scan3dCoordinateOffset node is not found. Please update Helios firmware.\n");
-                return (points, intensities);
+                return -1;
             }
 
-            // check if Helios2 camera used for the example
-            bool isHelios2 = false;
+            int heliosVersion = 1;
             var deviceModelNameNode = (ArenaNET.IString)device.NodeMap.GetNode("DeviceModelName");
             String deviceModelName = deviceModelNameNode.Value;
             if (deviceModelName.StartsWith("HLT") || deviceModelName.StartsWith("HTP"))
             {
-                isHelios2 = true;
+                heliosVersion = 2;
+            }
+            return heliosVersion;
+        }
+
+        public struct HeliosSettings
+        {
+            // set exposure time
+            public string exposureTime;
+            // set gain
+            public string conversionGain;
+            // set image accumulation
+            public int imageAccumulation;
+            // enable spatial filter
+            public bool spatialFilter;
+            // enable confidence threshold
+            public bool confidenceThreshold;
+
+            public HeliosSettings(string exposureTime = "Exp1000Us", string conversionGain = "Low", int imageAccumulation = 4, bool spatialFilter = true, bool confidenceThreshold = true)
+            {
+                this.exposureTime = exposureTime;
+                this.conversionGain = conversionGain;
+                this.imageAccumulation = imageAccumulation;
+                this.spatialFilter = spatialFilter;
+                this.confidenceThreshold = confidenceThreshold;
+            }
+        }
+
+        public static (List<Point3d> points, List<int> intensities) GetPointCloud(ArenaNET.IDevice device, HeliosSettings settings)
+        {
+            const UInt32 TIMEOUT = 2000;
+            const String PIXEL_FORMAT = "Coord3D_ABCY16";
+
+            int heliosDeviceVersion = GetHeliosCameraVersion(device);
+            if (heliosDeviceVersion == 0)
+            {
+                return (points: new List<Point3d>(), intensities: new List<int>());
             }
 
-
-            // Get node values that will be changed in order to return their values at
-            //    the end of the example
-
+            // Get a bunch of node values to be modified as settings.
             var pixelFormatNode = (ArenaNET.IEnumeration)device.NodeMap.GetNode("PixelFormat");
             String pixelFormatInitial = pixelFormatNode.Entry.Symbolic;
 
             var operatingModeNode = (ArenaNET.IEnumeration)device.NodeMap.GetNode("Scan3dOperatingMode");
             String operatingModeInitial = operatingModeNode.Entry.Symbolic;
+
+            var exposureTimeSelectorNode = (ArenaNET.IEnumeration)device.NodeMap.GetNode("ExposureTimeSelector");
+            String exposureTimeSelectorInitial = exposureTimeSelectorNode.Entry.Symbolic;
+
+            var conversionGainNode = (ArenaNET.IEnumeration)device.NodeMap.GetNode("ConversionGain");
+            String conversionGainNodeInitial = conversionGainNode.Entry.Symbolic;
+
+            var imageAccumulationNode = (ArenaNET.IInteger)device.NodeMap.GetNode("Scan3dImageAccumulation");
+            Int64 imageAccumulationInitial = imageAccumulationNode.Value;
+
+            var spatialFilterNode = (ArenaNET.IBoolean)device.NodeMap.GetNode("Scan3dSpatialFilterEnable");
+            Boolean spatialFilterInitial = spatialFilterNode.Value;
+
+            var confidenceThresholdNode = (ArenaNET.IBoolean)device.NodeMap.GetNode("Scan3dConfidenceThresholdEnable");
+            Boolean confidenceThresholdInitial = confidenceThresholdNode.Value;
 
             // Set pixel format
             //    Warning: HLT003S-001 / Helios2 - has only Coord3D_ABCY16 in
@@ -122,17 +157,25 @@ namespace LucidArena
             pixelFormatNode.FromString(PIXEL_FORMAT);
 
             // set operating mode distance
+            operatingModeNode.FromString(heliosDeviceVersion == 2 ? "Distance3000mmSingleFreq" : "Distance1500mm");
+            // set exposure time
+            exposureTimeSelectorNode.FromString(settings.exposureTime);
+            // set gain
+            conversionGainNode.FromString(settings.conversionGain);
+            // set image accumulation
+            imageAccumulationNode.Value = settings.imageAccumulation;
+            // enable spatial filter
+            spatialFilterNode.Value = settings.spatialFilter;
+            // enable confidence threshold
+            confidenceThresholdNode.Value = settings.confidenceThreshold;
 
-            if (isHelios2)
-            {
-                Console.WriteLine("Set 3D operating mode to Distance3000mm");
-                operatingModeNode.FromString("Distance3000mmSingleFreq");
-            }
-            else
-            {
-                Console.WriteLine("Set 3D operating mode to Distance1500mm");
-                operatingModeNode.FromString("Distance1500mm");
-            }
+            // enable stream auto negotiate packet size
+            var streamAutoNegotiatePacketSizeNode = (ArenaNET.IBoolean)device.TLStreamNodeMap.GetNode("StreamAutoNegotiatePacketSize");
+            streamAutoNegotiatePacketSizeNode.Value = true;
+
+            // enable stream packet resend
+            var streamPacketResendEnableNode = (ArenaNET.IBoolean)device.TLStreamNodeMap.GetNode("StreamPacketResendEnable");
+            streamPacketResendEnableNode.Value = true;
 
             // get the offset for x and y to correctly adjust values when in an
             // unsigned pixel format
@@ -160,14 +203,6 @@ namespace LucidArena
             Scan3dCoordinateSelectorNode.FromString("CoordinateC");
             float scaleZ = (float)Scan3dCoordinateScaleNode.Value;
 
-            // enable stream auto negotiate packet size
-            var streamAutoNegotiatePacketSizeNode = (ArenaNET.IBoolean)device.TLStreamNodeMap.GetNode("StreamAutoNegotiatePacketSize");
-            streamAutoNegotiatePacketSizeNode.Value = true;
-
-            // enable stream packet resend
-            var streamPacketResendEnableNode = (ArenaNET.IBoolean)device.TLStreamNodeMap.GetNode("StreamPacketResendEnable");
-            streamPacketResendEnableNode.Value = true;
-
             // start stream
             device.StartStream();
 
@@ -183,16 +218,21 @@ namespace LucidArena
             int srcPixelSize = (int)(srcBpp / 8);
             byte[] data = image.DataArray;
 
-            (points, intensities) = GetPointCloudUnsigned(data, size, srcPixelSize, scaleX, scaleY, scaleZ, offsetX, offsetY);
+            var (points, intensities) = GetPointCloudUnsigned(data, size, srcPixelSize, scaleX, scaleY, scaleZ, offsetX, offsetY);
 
             // clean up example
             device.RequeueBuffer(image);
             device.StopStream();
 
             // return nodes to their initial values
+            Console.WriteLine("Nodes were set back to initial values");
             pixelFormatNode.FromString(pixelFormatInitial);
             operatingModeNode.FromString(operatingModeInitial);
-            Console.WriteLine("Nodes were set back to initial values");
+            exposureTimeSelectorNode.FromString(exposureTimeSelectorInitial);
+            conversionGainNode.FromString(conversionGainNodeInitial);
+            imageAccumulationNode.Value = imageAccumulationInitial;
+            spatialFilterNode.Value = spatialFilterInitial;
+            confidenceThresholdNode.Value = confidenceThresholdInitial;
 
             return (points, intensities);
         }

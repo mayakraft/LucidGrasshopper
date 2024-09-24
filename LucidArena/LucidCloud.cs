@@ -66,7 +66,7 @@ namespace LucidArena
             try
             {
                 if (LucidManager.devices.Count == 0) throw new Exception("no available devices");
-                (points, _) = HeliosDevice.GetPointCloud(LucidManager.GetHeliosDevice());
+                (points, _) = HeliosDevice.GetPointCloud(LucidManager.GetHeliosDevice(), new HeliosDevice.HeliosSettings());
             }
             catch (Exception error)
             {

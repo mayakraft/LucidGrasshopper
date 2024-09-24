@@ -6,6 +6,7 @@ using System.Linq;
 using System.Collections.Generic;
 using Rhino.Commands;
 using Rhino.Display;
+using static LucidArena.HeliosDevice;
 
 // In order to load the result of this wizard, you will also need to
 // add the output bin/ folder of this project to the list of loaded
@@ -36,13 +37,27 @@ namespace LucidArena
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddBooleanParameter("Snap Cloud", "Snap", "Toggle input to capture the point cloud", GH_ParamAccess.item);
+            
             pManager.AddIntervalParameter("Filter X Range", "X Range", "Filter to include only points within this range", GH_ParamAccess.item);
             pManager.AddIntervalParameter("Filter Y Range", "Y Range", "Filter to include only points within this range", GH_ParamAccess.item);
             pManager.AddIntervalParameter("Filter Z Range", "Z Range", "Filter to include only points within this range", GH_ParamAccess.item);
+            
+            pManager.AddIntegerParameter("Exposure Mode", "Exposure", "Set the exposure mode", GH_ParamAccess.item);
+            pManager.AddIntegerParameter("Conversion Gain", "Gain", "Set the conversion gain", GH_ParamAccess.item);
+            pManager.AddIntegerParameter("Image Accumulation", "Accumulation", "Set the image accumulation", GH_ParamAccess.item);
+            
+            pManager.AddBooleanParameter("Spacial Filtering", "Filtering", "Activate spacial filtering", GH_ParamAccess.item);
+            pManager.AddBooleanParameter("Confidence Threshold", "Confidence", "Activate confidence threshold", GH_ParamAccess.item);
+            
             pManager[0].Optional = true;
             pManager[1].Optional = true;
             pManager[2].Optional = true;
             pManager[3].Optional = true;
+            pManager[4].Optional = true;
+            pManager[5].Optional = true;
+            pManager[6].Optional = true;
+            pManager[7].Optional = true;
+            pManager[8].Optional = true;
         }
 
         /// <summary>
@@ -66,6 +81,12 @@ namespace LucidArena
             var xInterval = Interval.Unset;
             var yInterval = Interval.Unset;
             var zInterval = Interval.Unset;
+            var exposureTime = string.Empty;
+            var conversionGain = string.Empty;
+            var imageAccumulation = -1;
+            var spatialFilter = true;
+            var confidenceThreshold = true;
+
             var info = new List<string>();
             var points = new List<Point3d>();
             var intensities = new List<int>();
@@ -74,6 +95,19 @@ namespace LucidArena
             DA.GetData(1, ref xInterval);
             DA.GetData(2, ref yInterval);
             DA.GetData(3, ref zInterval);
+
+            DA.GetData(4, ref exposureTime);
+            DA.GetData(5, ref conversionGain);
+            DA.GetData(6, ref imageAccumulation);
+            DA.GetData(7, ref spatialFilter);
+            DA.GetData(8, ref confidenceThreshold);
+
+            var settings = new HeliosSettings();
+            if (exposureTime != string.Empty) { settings.exposureTime = exposureTime; }
+            if (conversionGain != string.Empty) { settings.conversionGain = conversionGain; }
+            if (imageAccumulation != -1) { settings.imageAccumulation = imageAccumulation; }
+            settings.spatialFilter = spatialFilter;
+            settings.confidenceThreshold = confidenceThreshold;
 
             var heliosDevices = LucidManager.devices.Where(device => {
                 String deviceModelName = ((ArenaNET.IString)device.NodeMap.GetNode("DeviceModelName")).Value;
@@ -90,7 +124,7 @@ namespace LucidArena
 
             try
             {
-                (points, intensities) = HeliosDevice.GetPointCloud(heliosDevices[0]);
+                (points, intensities) = HeliosDevice.GetPointCloud(heliosDevices[0], settings);
             }
             catch (Exception error)
             {
