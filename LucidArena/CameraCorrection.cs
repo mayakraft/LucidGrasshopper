@@ -72,14 +72,18 @@ namespace LucidArena
             DA.GetDataList(1, pointsInitial);
             DA.GetDataList(2, pointsTransformed);
 
+            string solveInfo = string.Empty;
             try
             {
                 // solution = MatrixSolver.Solve(matrices, points, out var solveInfo);
-                solution = MatrixSolver.Solve(matrices, pointsInitial, pointsTransformed, out var solveInfo);
+                // solution = MatrixSolver.Solve(matrices, pointsInitial, pointsTransformed, out var solveInfo);
+                solution = CorrectionMatrixSolver.ComputeCorrectionMatrix(matrices, pointsInitial, out solveInfo);
                 info.Add(solveInfo);
             }
             catch (Exception error)
             {
+                info.Add(solveInfo);
+                info.Add(error.Message);
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Error, error.ToString());
                 DA.AbortComponentSolution();
             }

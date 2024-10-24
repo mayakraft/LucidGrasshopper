@@ -10,171 +10,195 @@ using MathNet.Numerics.LinearAlgebra.Double;
 
 namespace LucidArena
 {
-    internal class MatrixSolver
+    internal class CorrectionMatrixSolver
     {
-            
-        // Function to populate A matrix for the linear least squares problem
-        private static Matrix<double> BuildAMatrix(List<Transform> transforms, List<Point3d> points) {
-            // Number of scans
-            int numScans = points.Count;
+        // Method to compute the correction matrix C
+        // public static Matrix<double> ComputeCorrectionMatrix(List<Transform> transforms, List<Point3d> referencePoints)
+        public static Transform ComputeCorrectionMatrix(List<Transform> transforms, List<Point3d> referencePoints, out string info)
+        {
+            info = string.Empty;
+            int numPoints = referencePoints.Count;
 
-            // A is a (3 * numScans) x 16 matrix
-            Matrix<double> A = DenseMatrix.OfArray(new double[3 * numScans, 16]);
+            // Assuming a 4x4 correction matrix (homogeneous transformation)
+            Matrix<double> A = DenseMatrix.OfArray(new double[3 * numPoints, 16]); // 16 unknowns in a 4x4 matrix
+            Vector<double> b = DenseVector.OfArray(new double[3 * numPoints]);
 
-            // Loop through each scan
-            for (int i = 0; i < numScans; i++) {
-                Point3d point = points[i];
-                Transform transform = transforms[i];
+            // Fill A and b according to the least squares system
+            for (int i = 0; i < numPoints; i++)
+            {
+                // Transform matrix for point cloud i
+                Transform T = transforms[i];
+                Matrix<double> Ti = TransformToMatrix(T); // Convert Rhino Transform to MathNet matrix
 
-                // Loop through the rows (0 for x, 1 for y, 2 for z)
-                for (int row = 0; row < 3; row++) {
-                    for (int col = 0; col < 4; col++) {
-                        // Fill A based on the product of the transform and the point coordinates
-                        A[3 * i + row, 4 * col + 0] = transform[row, 0] * (col == 3 ? 1 : point.X);
-                        A[3 * i + row, 4 * col + 1] = transform[row, 1] * (col == 3 ? 1 : point.Y);
-                        A[3 * i + row, 4 * col + 2] = transform[row, 2] * (col == 3 ? 1 : point.Z);
-                        A[3 * i + row, 4 * col + 3] = transform[row, 3] * (col == 3 ? 1 : 1); // Homogeneous coordinate
+                // Reference point from the transformed cloud
+                Point3d p = referencePoints[i];
+
+                // Extract coordinates of the point (p_x, p_y, p_z) and fill the rows for the least squares system
+                double px = p.X;
+                double py = p.Y;
+                double pz = p.Z;
+
+                // Ti^{-1} * p: Applying inverse of transform to p (convert back to original space)
+                var success = T.TryGetInverse(out var inverseT);
+                if (!success) throw new Exception("Matrix not invertible");
+                Point3d pOriginal = inverseT * p;
+
+                // Fill the matrix A and vector b for each point
+                // 3 rows per point: x, y, z component
+                for (int row = 0; row < 3; row++)
+                {
+                    for (int col = 0; col < 16; col++)
+                    {
+                        // Fill the corresponding row and column of A
+                        A[3 * i + row, col] = FillAForPointCloud(row, col, pOriginal);
+                    }
+
+                    // Fill the target vector b with reference points
+                    switch (row)
+                    {
+                        case 0:
+                            b[3 * i + row] = px; // x-coordinate
+                            break;
+                        case 1:
+                            b[3 * i + row] = py; // y-coordinate
+                            break;
+                        case 2:
+                            b[3 * i + row] = pz; // z-coordinate
+                            break;
                     }
                 }
             }
-
-            return A;
-        }
-
-        // Function to build the b vector (target positions)
-        private static Vector<double> BuildBVector(List<Point3d> referencePoints) {
-            int numScans = referencePoints.Count;
-
-            // b is a (3 * numScans) vector containing the reference point positions
-            Vector<double> b = DenseVector.OfArray(new double[3 * numScans]);
-
-            // Fill b with the reference points' x, y, z components
-            for (int i = 0; i < numScans; i++) {
-                Point3d refPoint = referencePoints[i];
-                b[3 * i + 0] = refPoint.X;
-                b[3 * i + 1] = refPoint.Y;
-                b[3 * i + 2] = refPoint.Z;
-            }
-
-            return b;
-        }
-
-        // Function to compute the correction matrix using least squares solver
-        private static Transform SolveForCorrectionMatrix(Matrix<double> A, Vector<double> b) {
-            // Solve the linear system using the least squares approach: A * C = b
-            Vector<double> C_vector = A.PseudoInverse() * b;
-
-            // Convert the resulting vector into a 4x4 matrix
-            Transform correctionMatrix = Transform.Identity;
-
-            // Fill in the correction matrix from the solved vector (C_vector)
-            for (int row = 0; row < 4; row++) {
-                for (int col = 0; col < 4; col++) {
-                    correctionMatrix[row, col] = C_vector[4 * row + col];
-                }
-            }
-
-            return correctionMatrix;
-        }
-
-        // Main execution function
-        public static Transform Solve(
-            List<Transform> T, // List of transforms for each scan
-            List<Point3d> P,   // List of reference points (should align)
-            List<Point3d> refP, // List of actual reference points in the aligned space
-            out string info) // Information on the process
-        {
-            // Build the A matrix
-            Matrix<double> A = BuildAMatrix(T, P);
-
-            // Build the b vector
-            Vector<double> b = BuildBVector(refP);
-
-            // Solve for the correction matrix
-            Transform C = SolveForCorrectionMatrix(A, b);
-
-            info = "Correction matrix successfully computed.";
-            return C;
-        }
-
-        public static Transform Solve(List<Transform> transforms, List<Point3d> points, out string info)
-        {
-            info = string.Empty;
-            int numPoints = points.Count;
-            Matrix<double> A = Matrix<double>.Build.Dense(3 * numPoints, 16);
-            Matrix<double> b = Matrix<double>.Build.Dense(3 * numPoints, 1);
-            // Matrix A = new Matrix(3 * numPoints, 16);
-            // Matrix b = new Matrix(3 * numPoints, 1);
-
-            for (int i = 0; i < numPoints; i++)
-            {
-                Point3d p = points[i];
-                Transform T = transforms[i];
-
-                Point3d tp = T * p;
-
-                // for (int row = 0; row < 3; row++)
-                // {
-                //     for (int col = 0; col < 16; col++)
-                //     {
-                //         // A[3 * i + row, col] = /* todo */ 0;
-                //     }
-                // }
-                for (int m = 0; m < 4; m++)
-                {
-                    var pointValue = m == 3 ? 1.0 : points[i][m];
-                    A[i * 3 + 0, m * 4 + 0] = transforms[i][0, 0] * pointValue;
-                    A[i * 3 + 0, m * 4 + 1] = transforms[i][0, 1] * pointValue;
-                    A[i * 3 + 0, m * 4 + 2] = transforms[i][0, 2] * pointValue;
-                    A[i * 3 + 0, m * 4 + 3] = transforms[i][0, 3] * pointValue;
-
-                    A[i * 3 + 1, m * 4 + 0] = transforms[i][1, 0] * pointValue;
-                    A[i * 3 + 1, m * 4 + 1] = transforms[i][1, 1] * pointValue;
-                    A[i * 3 + 1, m * 4 + 2] = transforms[i][1, 2] * pointValue;
-                    A[i * 3 + 1, m * 4 + 3] = transforms[i][1, 3] * pointValue;
-
-                    A[i * 3 + 2, m * 4 + 0] = transforms[i][2, 0] * pointValue;
-                    A[i * 3 + 2, m * 4 + 1] = transforms[i][2, 1] * pointValue;
-                    A[i * 3 + 2, m * 4 + 2] = transforms[i][2, 2] * pointValue;
-                    A[i * 3 + 2, m * 4 + 3] = transforms[i][2, 3] * pointValue;
-                }
-
-                b[3 * i + 0, 0] = tp.X;
-                b[3 * i + 1, 0] = tp.Y;
-                b[3 * i + 2, 0] = tp.Z;
-            }
-
-            // debug
-            for (int i = 0; i < 3 * numPoints; i++)
-            {
-                for (int j = 0; j < 16; j++)
-                {
-                    info += $"{A[i, j]} ";
-                }
+ 
+            for (int i = 0; i < 3 * numPoints; i++) {
+                for (int j = 0; j < 16; j++) info += $"{A[i, j]} ";
                 info += "\n";
             }
-
             info += "\n";
+
+            // var solution = A.QR().Solve(b);
+            // Solve the least squares system A * C = b
+            // Vector<double> solution = A.TransposeThisAndMultiply(A).Cholesky().Solve(A.TransposeThisAndMultiply(b));
+            var solution = SolveLeastSquares(A, b, out var squaresInfo);
+            info += squaresInfo;
+
+            // Reshape the solution into a 4x4 correction matrix C
+            Matrix<double> correctionMatrix = DenseMatrix.OfArray(new double[4, 4]);
+            for (int i = 0; i < 16; i++) {
+                correctionMatrix[i / 4, i % 4] = solution[i];
+            }
 
             var correctionVec = A.Solve(b);
 
-            for (int i = 0; i < 16; i++)
+            for (int i = 0; i < 16; i++) info += $"{solution[i]}\n";
+
+            return MatrixToRhinoTransform(correctionMatrix);
+        }
+
+        // Convert Rhino Transform to MathNet matrix
+        private static Matrix<double> TransformToMatrix(Transform T)
+        {
+            return DenseMatrix.OfArray(new double[,]
             {
-                info += $"{correctionVec[i, 0]}\n";
-            }
+                { T.M00, T.M01, T.M02, T.M03 },
+                { T.M10, T.M11, T.M12, T.M13 },
+                { T.M20, T.M21, T.M22, T.M23 },
+                { T.M30, T.M31, T.M32, T.M33 }
+            });
+        }
 
-            // if (!success) throw new Exception("No solution found");
+        public static Transform MatrixToRhinoTransform(Matrix<double> matrix)
+        {
+            if (matrix.RowCount != 4 || matrix.ColumnCount != 4)
+                throw new ArgumentException("Matrix must be 4x4.");
 
-            Transform C = Transform.Identity;
+            Transform transform = Transform.Identity;
+
             for (int i = 0; i < 4; i++)
             {
                 for (int j = 0; j < 4; j++)
                 {
-                    C[i, j] = correctionVec[4 * i + j, 0];
+                    transform[i, j] = matrix[i, j];
                 }
             }
 
-            return C;
+            return transform;
+        }
+
+        // Fill matrix A for a point cloud at a given row and column
+        private static double FillAForPointCloud(int row, int col, Point3d pOriginal)
+        {
+            if (row == 0)
+            {
+                // First row: dealing with x-coordinate
+                if (col == 0) return pOriginal.X;
+                if (col == 1) return pOriginal.Y;
+                if (col == 2) return pOriginal.Z;
+                if (col == 3) return 1.0;
+                if (col >= 4 && col <= 15) return 0.0;
+            }
+            else if (row == 1)
+            {
+                // Second row: dealing with y-coordinate
+                if (col == 0 || col == 1 || col == 2 || col == 3) return 0.0;
+                if (col == 4) return pOriginal.X;
+                if (col == 5) return pOriginal.Y;
+                if (col == 6) return pOriginal.Z;
+                if (col == 7) return 1.0;
+                if (col >= 8 && col <= 15) return 0.0;
+            }
+            else if (row == 2)
+            {
+                // Third row: dealing with z-coordinate
+                if (col == 0 || col == 1 || col == 2 || col == 3) return 0.0;
+                if (col == 4 || col == 5 || col == 6 || col == 7) return 0.0;
+                if (col == 8) return pOriginal.X;
+                if (col == 9) return pOriginal.Y;
+                if (col == 10) return pOriginal.Z;
+                if (col == 11) return 1.0;
+                if (col >= 12 && col <= 15) return 0.0;
+            }
+
+            throw new IndexOutOfRangeException("Invalid row or column");
+        }
+        
+        private static Vector<double> SolveLeastSquares(Matrix<double> A, Vector<double> b, out string info)
+        {
+            info = string.Empty;
+            // Step 1: Compute AᵀA
+            var AtA = A.TransposeThisAndMultiply(A);
+            
+            // Step 2: Symmetrize AtA
+            AtA = 0.5 * (AtA + AtA.Transpose());
+
+            // Step 3: Regularization
+            var lambda = 1e-5; // Small regularization value
+            var AtA_reg = AtA + lambda * Matrix<double>.Build.DenseIdentity(AtA.RowCount);
+
+            // Log dimensions for debugging
+            info += $"A dimensions: {A.RowCount}x{A.ColumnCount}";
+            info += $"b dimensions: {b.Count}";
+
+            // Log values for debugging
+            info += "Matrix A:";
+            info += A.ToString();
+            info += "Vector b:";
+            info += b.ToString();
+
+            // Step 4: Try to solve using QR decomposition
+            Vector<double> solution;
+
+            try
+            {
+                // Use QR decomposition
+                solution = AtA_reg.QR().Solve(b);
+            }
+            catch (Exception ex)
+            {
+                info += $"QR Solve Error: {ex.Message}";
+                throw; // Re-throw the exception after logging
+            }
+
+            return solution;
         }
     }
 }

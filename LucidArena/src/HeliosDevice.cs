@@ -12,7 +12,7 @@ namespace LucidArena
 {
     internal class HeliosDevice
     {
-        private static (List<Point3d> points, List<int> intensities) GetPointCloudUnsigned(
+        public static (List<Point3d> points, List<int> intensities) GetPointCloudUnsigned(
             byte[] data,
             UInt32 size,
             int srcPixelSize,
@@ -20,7 +20,8 @@ namespace LucidArena
             float scaleY,
             float scaleZ,
             float offsetX,
-            float offsetY)
+            float offsetY,
+            float offsetZ)
         {
             var points = new List<Point3d>();
             var intensities = new List<int>();
@@ -52,7 +53,7 @@ namespace LucidArena
                     //    order to get the correct position in millimeters.
                     _x = x * scaleX + offsetX;
                     _y = y * scaleY + offsetY;
-                    _z = z * scaleZ;
+                    _z = z * scaleZ + offsetZ;
                     points.Add(new Point3d(_x, _y, _z));
                     intensities.Add(intensity);
                 }
@@ -207,6 +208,8 @@ namespace LucidArena
             Scan3dCoordinateSelectorNode.FromString("CoordinateC");
             float scaleZ = (float)Scan3dCoordinateScaleNode.Value;
 
+            float offsetZ = 0;
+
             // start stream
             device.StartStream();
 
@@ -222,7 +225,7 @@ namespace LucidArena
             int srcPixelSize = (int)(srcBpp / 8);
             byte[] data = image.DataArray;
 
-            var (points, intensities) = GetPointCloudUnsigned(data, size, srcPixelSize, scaleX, scaleY, scaleZ, offsetX, offsetY);
+            var (points, intensities) = GetPointCloudUnsigned(data, size, srcPixelSize, scaleX, scaleY, scaleZ, offsetX, offsetY, offsetZ);
 
             // clean up example
             device.RequeueBuffer(image);

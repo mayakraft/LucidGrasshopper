@@ -6,6 +6,7 @@ using System.Linq;
 using System.Collections.Generic;
 using Rhino.Commands;
 using Rhino.Display;
+using static LucidArena.ColorCloud;
 
 // In order to load the result of this wizard, you will also need to
 // add the output bin/ folder of this project to the list of loaded
@@ -25,7 +26,7 @@ namespace LucidArena
         /// </summary>
         public LucidCloud()
           : base("Lucid Cloud", "Cloud",
-              "Create a point cloud from Lucid devices",
+              "Create a colored point cloud using Triton and Helios cameras in unison",
               "Lucid", "Subcategory")
         {
         }
@@ -47,6 +48,7 @@ namespace LucidArena
             pManager.AddTextParameter("Status", "Status", "Device Information", GH_ParamAccess.item);
             pManager.AddPointParameter("Points", "Points", "List of points composing the point cloud", GH_ParamAccess.list);
             pManager.AddColourParameter("Colors", "Colors", "List of colors composing the point cloud", GH_ParamAccess.list);
+            pManager.AddNumberParameter("Intensity", "Intensity", "List of intensities for each point", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -57,27 +59,49 @@ namespace LucidArena
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             var snapPhoto = false;
+
             var points = new List<Point3d>();
             var colors = new List<Color4f>();
-            List<string> result = new List<string>();
+            var intensities = new List<int>();
+
+            List<string> info = new List<string>();
 
             DA.GetData(0, ref snapPhoto);
 
+            var tritonDevices = LucidManager.devices.Where(device => {
+                String deviceModelName = ((ArenaNET.IString)device.NodeMap.GetNode("DeviceModelName")).Value;
+                return deviceModelName.Contains("TRI") && deviceModelName.Contains("-C");
+            }).ToList();
+
+            var heliosDevices = LucidManager.devices.Where(device => {
+                String deviceModelName = ((ArenaNET.IString)device.NodeMap.GetNode("DeviceModelName")).Value;
+                return deviceModelName.StartsWith("HLT") || deviceModelName.StartsWith("HTP");
+            }).ToList();
+
+            if (heliosDevices.Count == 0 || tritonDevices.Count == 0)
+            {
+                DA.SetData(0, $"{heliosDevices.Count} Helios and {tritonDevices.Count} Triton cameras found.");
+                DA.SetDataList(1, points);
+                DA.SetDataList(2, colors);
+                DA.SetDataList(3, intensities);
+                return;
+            }
+
             try
             {
-                if (LucidManager.devices.Count == 0) throw new Exception("no available devices");
-                (points, _) = HeliosDevice.GetPointCloud(LucidManager.GetHeliosDevice(), new HeliosDevice.HeliosSettings());
+                (points, intensities, colors) = CaptureImageAndCloud(tritonDevices[0], heliosDevices[0]);
+                //info.Add(calibration);
             }
             catch (Exception error)
             {
-                // AddRuntimeMessage(GH_RuntimeMessageLevel.Error, error.ToString());
-                // DA.AbortComponentSolution();
-                result.Add($"unsuccessful: {error.Message}");
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, error.ToString());
+                DA.AbortComponentSolution();
             }
 
-            DA.SetData(0, string.Join("\n", result));
+            DA.SetData(0, string.Join("\n", info));
             DA.SetDataList(1, points);
             DA.SetDataList(2, colors);
+            DA.SetDataList(3, intensities);
         }
 
         /// <summary>
@@ -101,7 +125,7 @@ namespace LucidArena
         /// </summary>
         public override Guid ComponentGuid
         {
-            get { return new Guid("acf551ae-0ae5-46e3-9fea-83d431a1d889"); }
+            get { return new Guid("320821e0-bcee-42e2-b12e-56d4bedbac17"); }
         }
     }
 }

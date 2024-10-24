@@ -9,6 +9,7 @@
   </PropertyGroup>
   
   <ItemGroup>
+    <PackageReference Include="Emgu.CV.runtime.windows" Version="4.9.0.5494" />
     <PackageReference Include="Grasshopper" Version="7.13.21348.13001" IncludeAssets="compile;build" />
     <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
   </ItemGroup>
@@ -19,6 +20,12 @@
     </Reference>
     <Reference Include="SaveNET_v140">
       <HintPath>C:\Program Files\Lucid Vision Labs\Arena SDK\x64Release\SaveNET_v140.dll</HintPath>
+    </Reference>
+    <Reference Include="ArenaNET_v140">
+      <HintPath>..\..\Arena SDK\x64Release\ArenaNET_v140.dll</HintPath>
+    </Reference>
+    <Reference Include="SaveNET_v140">
+      <HintPath>..\..\Arena SDK\x64Release\SaveNET_v140.dll</HintPath>
     </Reference>
   </ItemGroup>
 
