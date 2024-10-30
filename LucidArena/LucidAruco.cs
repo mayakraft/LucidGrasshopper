@@ -6,9 +6,9 @@ using System.Linq;
 using System.Collections.Generic;
 using Rhino.Commands;
 using Rhino.Display;
-using static LucidArena.TritonDevice;
-
+using static LucidArena.AlignAruco;
 using Emgu.CV;
+
 // In order to load the result of this wizard, you will also need to
 // add the output bin/ folder of this project to the list of loaded
 // folder in Grasshopper.
@@ -16,7 +16,7 @@ using Emgu.CV;
 
 namespace LucidArena
 {
-    public class LucidTritonIntrinsics : GH_Component
+    public class LucidAruco : GH_Component
     {
         /// <summary>
         /// Each implementation of GH_Component must provide a public 
@@ -25,9 +25,9 @@ namespace LucidArena
         /// Subcategory the panel. If you use non-existing tab or panel names, 
         /// new tabs/panels will automatically be created.
         /// </summary>
-        public LucidTritonIntrinsics()
-          : base("Lucid Triton Intrinsics", "Intrinsics",
-              "Discover the intrinsics for a Triton Camera",
+        public LucidAruco()
+          : base("Lucid arUco marker alignment", "arUco",
+              "Find the displacement between a list of images containing an arUco marker",
               "Lucid", "Subcategory")
         {
         }
@@ -37,7 +37,7 @@ namespace LucidArena
         /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddBooleanParameter("Calibrate", "Calibrate", "Find the intrinsics", GH_ParamAccess.item);
+            pManager.AddGenericParameter("Images", "Images", "A list of images containing an arUco marker", GH_ParamAccess.list);
             pManager[0].Optional = true;
         }
 
@@ -47,10 +47,8 @@ namespace LucidArena
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
             pManager.AddTextParameter("Status", "Status", "Device Information", GH_ParamAccess.item);
-            pManager.AddNumberParameter("Camera Matrix", "Camera Matrix", "the camera's Matrix", GH_ParamAccess.list);
-            pManager.AddNumberParameter("Distance Coefficients", "Dist Coeffs", "the camera's distance coefficients", GH_ParamAccess.list);
-            pManager.AddGenericParameter("cv::Mat Camera Matrix", "Raw Camera Matrix", "the camera's Matrix", GH_ParamAccess.item);
-            pManager.AddGenericParameter("cv::Mat Distance Coefficients", "Raw Dist Coeffs", "the camera's distance coefficients", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Matrix", "Matrix", "the alignment matrix for this image", GH_ParamAccess.tree);
+            pManager.AddGenericParameter("cv::Mat Matrix", "Raw Matrix", "the alignment matrix for this image", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -60,38 +58,17 @@ namespace LucidArena
         /// to store data in output parameters.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            var snapPhoto = false;
-            var points = new List<Point3d>();
-            var colors = new List<Color4f>();
+            List<Mat> images = new List<Mat>();
+            List<Mat> matrices = new List<Mat>();
             List<string> info = new List<string>();
-            Mat cameraMatrix, distCoeffs;
 
-            DA.GetData(0, ref snapPhoto);
-
-            var tritonDevices = LucidManager.devices.Where(device => {
-                String deviceModelName = ((ArenaNET.IString)device.NodeMap.GetNode("DeviceModelName")).Value;
-                return deviceModelName.Contains("TRI") && deviceModelName.Contains("-C");
-            }).ToList();
-
-            if (tritonDevices.Count == 0)
-            {
-                DA.SetData(0, "No triton color camera found.");
-                DA.SetData(1, string.Empty);
-                return;
-            }
+            DA.GetData(0, ref images);
 
             try
             {
-                (cameraMatrix, distCoeffs) = CalculateAndSaveCalibrationValues(tritonDevices[0], out var calculationInfo);
-                info.Add($"cameraMatrix: {cameraMatrix}");
-                info.Add($"distCoeffs: {distCoeffs}");
-                info.Add($"camera matrix info (cols, rows): {cameraMatrix.Cols}, {cameraMatrix.Rows}");
-                info.Add($"distance coefficients matrix info (cols, rows): {distCoeffs.Cols}, {distCoeffs.Rows}");
-                info.Add(calculationInfo);
-                DA.SetDataList(1, cameraMatrix.GetData());
-                DA.SetDataList(2, distCoeffs.GetData());
-                DA.SetData(3, cameraMatrix);
-                DA.SetData(4, distCoeffs);
+                (matrices) = AlignArucoImages(images);
+                //DA.SetDataList(1, translation.GetData());
+                DA.SetDataList(2, matrices);
             }
             catch (Exception error)
             {
@@ -123,7 +100,7 @@ namespace LucidArena
         /// </summary>
         public override Guid ComponentGuid
         {
-            get { return new Guid("ef62707f-df44-4a7e-82ad-78d5aaeaeb24"); }
+            get { return new Guid("bceef0ca-96ca-11ef-b864-0242ac120002"); }
         }
     }
 }

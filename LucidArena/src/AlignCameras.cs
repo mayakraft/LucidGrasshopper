@@ -61,7 +61,8 @@ namespace LucidArena
         // =-=-=-=-=-=-=-=-=-
 
         // calculates and saves calibration values
-        public static (Array, Array) CalculateAndSaveOrientationValues(ArenaNET.IDevice deviceTRI, ArenaNET.IDevice deviceHLT)
+        //public static (Array, Array) CalculateAndSaveOrientationValues(ArenaNET.IDevice deviceTRI, ArenaNET.IDevice deviceHLT, Mat tritonCalibMatrix, Mat tritonDistCoeffs)
+        public static (Mat, Mat) CalculateAndSaveOrientationValues(ArenaNET.IDevice deviceTRI, ArenaNET.IDevice deviceHLT, Mat tritonCalibMatrix, Mat tritonDistCoeffs)
         {
             // get node values that will be changed in order to return their values at
             // the end of the example
@@ -74,14 +75,13 @@ namespace LucidArena
             // Read in camera matrix and distance coefficients
             Console.WriteLine("{0}Read camera matrix and distance coefficients from file '{1}'", TAB1, FILE_NAME_IN);
 
-            FileStorage fs = new FileStorage(FILE_NAME_IN, FileStorage.Mode.Read);
-            Mat cameraMatrix = new Mat();
-            Mat distCoeffs = new Mat();
+            //FileStorage fs = new FileStorage(FILE_NAME_IN, FileStorage.Mode.Read);
+            Mat cameraMatrix = tritonCalibMatrix;
+            Mat distCoeffs = tritonDistCoeffs;
 
-            fs.GetNode("cameraMatrix").ReadMat(cameraMatrix);
-            fs.GetNode("distCoeffs").ReadMat(distCoeffs);
-
-            fs.Dispose();
+            //fs.GetNode("cameraMatrix").ReadMat(cameraMatrix);
+            //fs.GetNode("distCoeffs").ReadMat(distCoeffs);
+            //fs.Dispose();
 
             // Get an image from Helios2
             Console.WriteLine("{0}Get and prepare HLT image", TAB1);
@@ -164,19 +164,18 @@ namespace LucidArena
             // Save orientation information
             Console.WriteLine($"{TAB1}Save camera matrix, distance coefficients, and rotation and translation vectors to file '{FILE_NAME_OUT}'");
 
-            FileStorage fs2 = new FileStorage(FILE_NAME_OUT, FileStorage.Mode.Write);
-            fs2.Write(cameraMatrix, "cameraMatrix");
-            fs2.Write(distCoeffs, "distCoeffs");
-            fs2.Write(rotationVector, "rotationVector");
-            fs2.Write(translationVector, "translationVector");
-
-            fs2.Dispose();
+            //FileStorage fs2 = new FileStorage(FILE_NAME_OUT, FileStorage.Mode.Write);
+            //fs2.Write(cameraMatrix, "cameraMatrix");
+            //fs2.Write(distCoeffs, "distCoeffs");
+            //fs2.Write(rotationVector, "rotationVector");
+            //fs2.Write(translationVector, "translationVector");
+            //fs2.Dispose();
 
             // return nodes to their initial values
             pixelFormatNodeTRI.FromString(pixelFormatInitialTRI);
             pixelFormatNodeHLT.FromString(pixelFormatInitialHLT);
 
-            return (translationVector.GetData(), rotationVector.GetData());
+            return (translationVector, rotationVector);
 
             // =-=-=-=-=-=-=-=-=-
             // =-  CLEAN UP  =-=-

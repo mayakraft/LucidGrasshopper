@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using Rhino.Commands;
 using Rhino.Display;
 using static LucidArena.AlignCameras;
+using Emgu.CV;
 
 // In order to load the result of this wizard, you will also need to
 // add the output bin/ folder of this project to the list of loaded
@@ -37,7 +38,13 @@ namespace LucidArena
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddBooleanParameter("Calibrate", "Calibrate", "Make a calibration between Triton and Helios", GH_ParamAccess.item);
+            //pManager.AddNumberParameter("Lucid Matrix", "LucidMat", "the result of calibrating the Triton Camera", GH_ParamAccess.list);
+            //pManager.AddNumberParameter("Lucid Distortion Coefficients", "Distortion", "the result of calibrating the Triton Camera", GH_ParamAccess.list);
+            pManager.AddGenericParameter("Lucid Matrix", "LucidMat", "the result of calibrating the Triton Camera", GH_ParamAccess.list);
+            pManager.AddGenericParameter("Lucid Distortion Coefficients", "Distortion", "the result of calibrating the Triton Camera", GH_ParamAccess.list);
             pManager[0].Optional = true;
+            pManager[1].Optional = true;
+            pManager[2].Optional = true;
         }
 
         /// <summary>
@@ -48,6 +55,8 @@ namespace LucidArena
             pManager.AddTextParameter("Status", "Status", "Device Information", GH_ParamAccess.item);
             pManager.AddNumberParameter("Translation", "Translation", "the translation component between the two cameras", GH_ParamAccess.list);
             pManager.AddNumberParameter("Rotation", "Rotation", "the rotation component between the two cameras", GH_ParamAccess.list);
+            pManager.AddGenericParameter("cv::Mat Translation", "Raw Translation", "the translation component between the two cameras", GH_ParamAccess.item);
+            pManager.AddGenericParameter("cv::Mat Rotation", "Raw Rotation", "the rotation component between the two cameras", GH_ParamAccess.item);
         }
 
         /// <summary>
@@ -58,11 +67,21 @@ namespace LucidArena
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             var snapPhoto = false;
-            Array translation = Array.CreateInstance(typeof(double), 0);
-            Array rotation = Array.CreateInstance(typeof(double), 0);
+            Array translationArray = Array.CreateInstance(typeof(double), 0);
+            Array rotationArray = Array.CreateInstance(typeof(double), 0);
+            Mat translation = new Mat();
+            Mat rotation = new Mat();
             List<string> info = new List<string>();
+            //List<double> calibMat = new List<double> { 1, 0, 0, 0, 1, 0, 0, 0, 1};
+            //List<double> distCoef = new List<double>();
+            Mat calibrationMatrix = new Mat();
+            Mat distanceCoefficients = new Mat();
 
             DA.GetData(0, ref snapPhoto);
+            //DA.GetData(1, ref calibMat);
+            //DA.GetData(2, ref distCoef);
+            DA.GetData(1, ref calibrationMatrix);
+            DA.GetData(2, ref distanceCoefficients);
 
             var tritonDevices = LucidManager.devices.Where(device => {
                 String deviceModelName = ((ArenaNET.IString)device.NodeMap.GetNode("DeviceModelName")).Value;
@@ -77,16 +96,20 @@ namespace LucidArena
             if (heliosDevices.Count == 0 || tritonDevices.Count == 0)
             {
                 DA.SetData(0, $"{heliosDevices.Count} Helios and {tritonDevices.Count} Triton cameras found.");
-                DA.SetDataList(1, translation);
-                DA.SetDataList(2, rotation);
+                DA.SetDataList(1, translation.GetData());
+                DA.SetDataList(2, rotation.GetData());
+                DA.SetData(3, translation);
+                DA.SetData(4, rotation);
                 return;
             }
 
             try
             {
-                (translation, rotation) = CalculateAndSaveOrientationValues(tritonDevices[0], heliosDevices[0]);
-                DA.SetDataList(1, translation);
-                DA.SetDataList(2, rotation);
+                (translation, rotation) = CalculateAndSaveOrientationValues(tritonDevices[0], heliosDevices[0], calibrationMatrix, distanceCoefficients);
+                DA.SetDataList(1, translation.GetData());
+                DA.SetDataList(2, rotation.GetData());
+                DA.SetData(3, translation);
+                DA.SetData(4, rotation);
             }
             catch (Exception error)
             {

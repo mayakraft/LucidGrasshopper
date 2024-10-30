@@ -22,8 +22,8 @@ namespace LucidArena
         // number of calibration images to compare
         const UInt32 NUM_IMAGES = 10;
 
-        // calibration value file name
-        const String FILE_NAME = "tritoncalibration.yml";
+        //// calibration value file name
+        //const String FILE_NAME = "tritoncalibration.yml";
 
         // time to sleep between images (in milliseconds)
         const Int32 SLEEP_MS = 1000;
@@ -81,8 +81,9 @@ namespace LucidArena
         }
 
         // calculates and saves calibration values, first the "camera matrix", second the "distance coefficients"
-        public static (Mat, Mat) CalculateAndSaveCalibrationValues(ArenaNET.IDevice device)
+        public static (Mat, Mat) CalculateAndSaveCalibrationValues(ArenaNET.IDevice device, out string info)
         {
+            info = string.Empty;
             // get node values that will be changed in order to return their values at
             // the end of the example
             var acquisitionModeNode = (ArenaNET.IEnumeration)device.NodeMap.GetNode("AcquisitionMode");
@@ -186,16 +187,8 @@ namespace LucidArena
             double totalAvgErr = 0;
             bool calculationSucceeded = Calculate(s, imageSize, out cameraMatrix, out distCoeffs, calibrationPoints, rvecs, tvecs, reprojErrs, out totalAvgErr);
 
-            Console.WriteLine("Calculation {1}", calculationSucceeded ? "succeeded" : "failed");
-            Console.WriteLine("Calculated reprojection error is: {1}", totalAvgErr);
-
-            // save calibration information
-            Console.WriteLine("Save camera matrix and distance coefficients to file '{1}'", FILE_NAME);
-
-            FileStorage fs = new FileStorage(FILE_NAME, FileStorage.Mode.Write);
-            fs.Write(cameraMatrix, "cameraMatrix");
-            fs.Write(distCoeffs, "distCoeffs");
-            fs.Dispose();
+            info += $"success {calculationSucceeded}\n";
+            info += $"total average error {totalAvgErr}\n";
 
             device.StopStream();
 
