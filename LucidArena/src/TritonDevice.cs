@@ -80,6 +80,28 @@ namespace LucidArena
             }
         }
 
+        public static (ArenaNET.IImage, Mat, int, int) TakePhoto(ArenaNET.IDevice device, out string info)
+        {
+            info = string.Empty;
+            ArenaNET.IImage image = device.GetImage(TIMEOUT);
+            Size imageSize = new Size();
+            if (image == null)
+                throw new Exception("Incomplete image");
+            Int32 width = (int)image.Width;
+            Int32 height = (int)image.Height;
+            imageSize.Width = width;
+            imageSize.Height = height;
+
+            // copy data into an OpenCV matrix
+            Mat imageMatrix = new Mat(imageSize.Height, imageSize.Width, DepthType.Cv8U, 1);
+            imageMatrix.SetTo(new Gray(0).MCvScalar);
+            Byte[] imageData = image.DataArray;
+            Marshal.Copy(imageData, 0, imageMatrix.DataPointer, width * height);
+
+            device.RequeueBuffer(image);
+            return (image, imageMatrix, width, height);
+        }
+
         // calculates and saves calibration values, first the "camera matrix", second the "distance coefficients"
         public static (Mat, Mat) CalculateAndSaveCalibrationValues(ArenaNET.IDevice device, out string info)
         {

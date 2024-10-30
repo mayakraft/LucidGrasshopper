@@ -1,9 +1,13 @@
 ﻿using ArenaNET;
+using Emgu.CV;
+using Eto.Drawing;
 using Grasshopper.Kernel;
 using Rhino.Geometry;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using static LucidArena.TritonDevice;
 
 // In order to load the result of this wizard, you will also need to
 // add the output bin/ folder of this project to the list of loaded
@@ -16,6 +20,8 @@ namespace LucidArena
     {
         // image timeout (milliseconds)
         const UInt32 TIMEOUT = 2000;
+        bool previousSnapPhoto = false;
+        int snapCount = 0;
 
         /// <summary>
         /// Each implementation of GH_Component must provide a public 
@@ -38,9 +44,8 @@ namespace LucidArena
         {
             pManager.AddBooleanParameter("Snap Photo", "Snap", "Toggle input to take a photo", GH_ParamAccess.item);
             pManager.AddTextParameter("File Path", "Path", "Location of the .PNG file", GH_ParamAccess.item);
-            pManager.AddNumberParameter("Device Number", "Device", "Leave empty for automatic device selection, or specify device number to override", GH_ParamAccess.item);
             pManager[0].Optional = true;
-            pManager[2].Optional = true;
+            pManager[1].Optional = true;
         }
 
         /// <summary>
@@ -49,6 +54,7 @@ namespace LucidArena
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
             pManager.AddTextParameter("Status", "Status", "Information", GH_ParamAccess.item);
+            pManager.AddGenericParameter("Photo (cv::Mat)", "Photo", "The photo as an OpenCV Mat()", GH_ParamAccess.item);
         }
 
         /// <summary>
@@ -60,36 +66,46 @@ namespace LucidArena
         {
             bool snapPhoto = false;
             string userfilepath = string.Empty;
-            double deviceNumberInput = -1;
             List<string> result = new List<string>();
+            ArenaNET.IImage image;
+            Mat imageMat;
+            int width, height;
+
             DA.GetData(0, ref snapPhoto);
             DA.GetData(1, ref userfilepath);
-            DA.GetData(2, ref deviceNumberInput);
+
+            if (previousSnapPhoto == snapPhoto) { return; }
+            previousSnapPhoto = snapPhoto;
+
+            var tritonDevices = LucidManager.devices.Where(device => {
+                String deviceModelName = ((ArenaNET.IString)device.NodeMap.GetNode("DeviceModelName")).Value;
+                return deviceModelName.Contains("TRI") && deviceModelName.Contains("-C");
+            }).ToList();
+
+            if (tritonDevices.Count == 0)
+            {
+                DA.SetData(0, $"{tritonDevices.Count} Triton cameras found.");
+                return;
+            }
 
             try
             {
-                if (userfilepath == string.Empty) throw new Exception("required path to a new .PNG");
-                if (LucidManager.devices.Count == 0) throw new Exception("no available devices");
+                //if (userfilepath == string.Empty) throw new Exception("required path to a new .PNG");
                 if (Path.GetExtension(userfilepath) != ".png") result.Add("expecting .png file type");
 
-                var device = deviceNumberInput == -1
-                    ? LucidManager.GetTritonDevice()
-                    : LucidManager.devices[(int)deviceNumberInput];
-
-                // prepare
-                device.StartStream();
-                ArenaNET.IImage image = device.GetImage(TIMEOUT);
+                (image, imageMat, width, height) = TakePhoto(tritonDevices[0], out string photoInfo);
 
                 // save file
-                if (!Directory.Exists(Path.GetDirectoryName(userfilepath)))
+                if (userfilepath != null && userfilepath != string.Empty)
                 {
-                    Directory.CreateDirectory(Path.GetDirectoryName(userfilepath));
+                    if (!Directory.Exists(Path.GetDirectoryName(userfilepath)))
+                    {
+                        Directory.CreateDirectory(Path.GetDirectoryName(userfilepath));
+                    }
+                    image.Bitmap.Save(userfilepath, System.Drawing.Imaging.ImageFormat.Png);
                 }
-                image.Bitmap.Save(userfilepath, System.Drawing.Imaging.ImageFormat.Png);
 
-                // clean up
-                device.RequeueBuffer(image);
-                device.StopStream();
+                DA.SetData(1, imageMat);
                 result.Add($"capture successful: {userfilepath}");
             }
             catch (Exception ex)
@@ -97,6 +113,7 @@ namespace LucidArena
                 result.Add($"unsuccessful: {ex.Message}");
             }
 
+            result.Add($"snap: {snapCount++}");
             DA.SetData(0, string.Join("\n", result));
         }
 
