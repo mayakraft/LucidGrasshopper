@@ -40,8 +40,8 @@ namespace LucidArena
             pManager.AddBooleanParameter("Calibrate", "Calibrate", "Make a calibration between Triton and Helios", GH_ParamAccess.item);
             //pManager.AddNumberParameter("Lucid Matrix", "LucidMat", "the result of calibrating the Triton Camera", GH_ParamAccess.list);
             //pManager.AddNumberParameter("Lucid Distortion Coefficients", "Distortion", "the result of calibrating the Triton Camera", GH_ParamAccess.list);
-            pManager.AddGenericParameter("Lucid Matrix", "LucidMat", "the result of calibrating the Triton Camera", GH_ParamAccess.list);
-            pManager.AddGenericParameter("Lucid Distortion Coefficients", "Distortion", "the result of calibrating the Triton Camera", GH_ParamAccess.list);
+            pManager.AddGenericParameter("Lucid Matrix", "LucidMat", "the result of calibrating the Triton Camera", GH_ParamAccess.item);
+            pManager.AddGenericParameter("Lucid Distortion Coefficients", "Distortion", "the result of calibrating the Triton Camera", GH_ParamAccess.item);
             pManager[0].Optional = true;
             pManager[1].Optional = true;
             pManager[2].Optional = true;
@@ -72,8 +72,8 @@ namespace LucidArena
             List<string> info = new List<string>();
             //List<double> calibMat = new List<double> { 1, 0, 0, 0, 1, 0, 0, 0, 1};
             //List<double> distCoef = new List<double>();
-            Mat calibrationMatrix = new(4, 4, Emgu.CV.CvEnum.DepthType.Cv8U, 1);
-            Mat distanceCoefficients = new(4, 4, Emgu.CV.CvEnum.DepthType.Cv8U, 1);
+            Mat calibrationMatrix = new Mat(4, 4, Emgu.CV.CvEnum.DepthType.Cv8U, 1);
+            Mat distanceCoefficients = new Mat(4, 4, Emgu.CV.CvEnum.DepthType.Cv8U, 1);
 
             DA.GetData(0, ref snapPhoto);
             //DA.GetData(1, ref calibMat);
