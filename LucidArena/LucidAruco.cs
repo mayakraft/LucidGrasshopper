@@ -62,12 +62,12 @@ namespace LucidArena
             List<Mat> matrices = new List<Mat>();
             List<string> info = new List<string>();
 
-            DA.GetData(0, ref images);
+            DA.GetDataList(0, images);
 
             try
             {
                 (matrices) = AlignArucoImages(images);
-                //DA.SetDataList(1, translation.GetData());
+                //DA.SetDataTree(1, matrices.GetData());
                 DA.SetDataList(2, matrices);
             }
             catch (Exception error)

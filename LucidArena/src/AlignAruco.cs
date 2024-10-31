@@ -11,6 +11,7 @@ using static LucidArena.HeliosDevice;
 using System.Drawing;
 
 using Emgu.CV;
+using Emgu.CV.Aruco;
 using Emgu.CV.Util;
 using Emgu.CV.CvEnum;
 using Emgu.CV.Structure;
@@ -18,13 +19,16 @@ using Emgu.CV.Features2D;
 using System.Runtime;
 using System.Runtime.InteropServices;
 using ArenaNET;
-using Emgu.CV.Aruco;
 using Eto.Forms;
+using static Emgu.CV.Fisheye;
+using static Emgu.CV.OCR.Tesseract;
+using System.Collections;
 
 namespace LucidArena
 {
     internal class AlignAruco
     {
+
         public static List<Mat> AlignArucoImages(List<Mat> images)
         {
             //// Create charuco board object and CharucoDetector
@@ -89,5 +93,41 @@ namespace LucidArena
 
             return images.Select(img => new Mat()).ToList();
         }
+
+
+        //public static List<Mat> AlignArucoImages2(List<Mat> images)
+        //{
+        //    Mat cameraMatrix, distCoeffs;
+        //    Ptr<aruco::Dictionary> dictionary = GetPredefinedDictionary(cv::aruco::DICT_6X6_250);
+        //    var board = new CharucoBoard(5, 7, 0.04f, 0.02f, dictionary);
+        //    var paramss = new DetectorParameters();
+        //    Mat image;
+        //    Mat imageCopy;
+        //    inputVideo.retrieve(image);
+        //    image.copyTo(imageCopy);
+        //    std::vector<int> markerIds;
+        //    std::vector<std::vector<cv::Point2f>> markerCorners;
+        //    cv::aruco::detectMarkers(image, board->dictionary, markerCorners, markerIds, paramss);
+        //    // if at least one marker detected
+        //    if (markerIds.size() > 0)
+        //    {
+        //        cv::aruco::drawDetectedMarkers(imageCopy, markerCorners, markerIds);
+        //        std::vector<cv::Point2f> charucoCorners;
+        //        std::vector<int> charucoIds;
+        //        cv::aruco::interpolateCornersCharuco(markerCorners, markerIds, image, board, charucoCorners, charucoIds, cameraMatrix, distCoeffs);
+        //        // if at least one charuco corner detected
+        //        if (charucoIds.size() > 0)
+        //        {
+        //            cv::Scalar color = cv::Scalar(255, 0, 0);
+        //            cv::aruco::drawDetectedCornersCharuco(imageCopy, charucoCorners, charucoIds, color);
+        //            cv::Vec3d rvec, tvec;
+        //            bool valid = cv::aruco::estimatePoseCharucoBoard(charucoCorners, charucoIds, board, cameraMatrix, distCoeffs, rvec, tvec);
+        //            // if charuco pose is valid
+        //            if (valid)
+        //                cv::drawFrameAxes(imageCopy, cameraMatrix, distCoeffs, rvec, tvec, 0.1f);
+        //        }
+        //    }
+        //    cv::imshow("out", imageCopy);
+        //}
     }
 }

@@ -76,7 +76,6 @@ namespace LucidArena
             if (tritonDevices.Count == 0)
             {
                 DA.SetData(0, "No triton color camera found.");
-                DA.SetData(1, string.Empty);
                 return;
             }
 

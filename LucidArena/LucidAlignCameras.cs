@@ -69,13 +69,11 @@ namespace LucidArena
             var snapPhoto = false;
             Array translationArray = Array.CreateInstance(typeof(double), 0);
             Array rotationArray = Array.CreateInstance(typeof(double), 0);
-            Mat translation = new Mat();
-            Mat rotation = new Mat();
             List<string> info = new List<string>();
             //List<double> calibMat = new List<double> { 1, 0, 0, 0, 1, 0, 0, 0, 1};
             //List<double> distCoef = new List<double>();
-            Mat calibrationMatrix = new Mat();
-            Mat distanceCoefficients = new Mat();
+            Mat calibrationMatrix = new(4, 4, Emgu.CV.CvEnum.DepthType.Cv8U, 1);
+            Mat distanceCoefficients = new(4, 4, Emgu.CV.CvEnum.DepthType.Cv8U, 1);
 
             DA.GetData(0, ref snapPhoto);
             //DA.GetData(1, ref calibMat);
@@ -96,16 +94,16 @@ namespace LucidArena
             if (heliosDevices.Count == 0 || tritonDevices.Count == 0)
             {
                 DA.SetData(0, $"{heliosDevices.Count} Helios and {tritonDevices.Count} Triton cameras found.");
-                DA.SetDataList(1, translation.GetData());
-                DA.SetDataList(2, rotation.GetData());
-                DA.SetData(3, translation);
-                DA.SetData(4, rotation);
+                //DA.SetDataList(1, translation.GetData());
+                //DA.SetDataList(2, rotation.GetData());
+                //DA.SetData(3, translation);
+                //DA.SetData(4, rotation);
                 return;
             }
 
             try
             {
-                (translation, rotation) = CalculateAndSaveOrientationValues(tritonDevices[0], heliosDevices[0], calibrationMatrix, distanceCoefficients);
+                var (translation, rotation) = CalculateAndSaveOrientationValues(tritonDevices[0], heliosDevices[0], calibrationMatrix, distanceCoefficients);
                 DA.SetDataList(1, translation.GetData());
                 DA.SetDataList(2, rotation.GetData());
                 DA.SetData(3, translation);

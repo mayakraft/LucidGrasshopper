@@ -75,10 +75,13 @@ namespace LucidArena
             string solveInfo = string.Empty;
             try
             {
-                // solution = MatrixSolver.Solve(matrices, points, out var solveInfo);
-                // solution = MatrixSolver.Solve(matrices, pointsInitial, pointsTransformed, out var solveInfo);
-                solution = CorrectionMatrixSolver.ComputeCorrectionMatrix(matrices, pointsInitial, out solveInfo);
-                info.Add(solveInfo);
+                if (matrices.Count > 0 && pointsInitial.Count > 0 && pointsTransformed.Count > 0)
+                {
+                    // solution = MatrixSolver.Solve(matrices, points, out var solveInfo);
+                    // solution = MatrixSolver.Solve(matrices, pointsInitial, pointsTransformed, out var solveInfo);
+                    solution = CorrectionMatrixSolver.ComputeCorrectionMatrix(matrices, pointsInitial, out solveInfo);
+                    info.Add(solveInfo);
+                }
             }
             catch (Exception error)
             {
