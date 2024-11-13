@@ -76,8 +76,8 @@ namespace LucidArena
             // Mat distortionCoefficients = new Mat(1, 14, Emgu.CV.CvEnum.DepthType.Cv8U, 1);
 
             DA.GetData(0, ref snapPhoto);
-            DA.GetData(1, ref calibMat);
-            DA.GetData(2, ref distCoef);
+            DA.GetDataList(1, calibMat);
+            DA.GetDataList(2, distCoef);
             // DA.GetData(1, ref calibrationMatrix);
             // DA.GetData(2, ref distortionCoefficients);
 

@@ -124,8 +124,7 @@ namespace LucidArena
             if (heliosDevices.Count == 0)
             {
                 DA.SetData(0, "No Helios depth camera found.");
-                DA.SetDataList(1, points);
-                DA.SetDataList(2, intensities);
+                DA.SetData(1, cloud);
                 return;
             }
 

@@ -86,10 +86,10 @@ namespace LucidArena
             DA.GetData(0, ref snapPhoto);
             DA.GetData(1, ref threshhold);
 
-            DA.GetData(2, ref calibMat);
-            DA.GetData(3, ref distCoef);
-            DA.GetData(4, ref translation);
-            DA.GetData(5, ref rotation);
+            DA.GetDataList(2, calibMat);
+            DA.GetDataList(3, distCoef);
+            DA.GetDataList(4, translation);
+            DA.GetDataList(5, rotation);
 
             var tritonDevices = LucidManager.devices.Where(device => {
                 String deviceModelName = ((ArenaNET.IString)device.NodeMap.GetNode("DeviceModelName")).Value;

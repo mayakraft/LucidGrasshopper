@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using Rhino.Commands;
 using Rhino.Display;
 using static LucidArena.ColorCloud;
+using Emgu.CV;
 
 // In order to load the result of this wizard, you will also need to
 // add the output bin/ folder of this project to the list of loaded
@@ -89,7 +90,27 @@ namespace LucidArena
 
             try
             {
-                (points, intensities, colors) = CaptureImageAndCloud(tritonDevices[0], heliosDevices[0]);
+                List<double> calibMat = new List<double> { 1, 0, 0, 0, 1, 0, 0, 0, 1 };
+                List<double> distCoef = new List<double> { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+                List<double> translation = new List<double> { 0, 0, 0 };
+                List<double> rotation = new List<double> { 0, 0, 0 };
+                Mat calibrationMatrix = new Mat(3, 3, Emgu.CV.CvEnum.DepthType.Cv64F, 1);
+                Mat distortionCoefficients = new Mat(1, 14, Emgu.CV.CvEnum.DepthType.Cv64F, 1);
+                Mat rotationVector = new Mat(1, 3, Emgu.CV.CvEnum.DepthType.Cv64F, 1);
+                Mat translationVector = new Mat(1, 3, Emgu.CV.CvEnum.DepthType.Cv64F, 1);
+
+                calibrationMatrix.SetTo(calibMat.ToArray());
+                distortionCoefficients.SetTo(distCoef.ToArray());
+                rotationVector.SetTo(rotation.ToArray());
+                translationVector.SetTo(translation.ToArray());
+
+                (points, intensities, colors) = CaptureImageAndCloud(
+                    tritonDevices[0],
+                    heliosDevices[0],
+                    calibrationMatrix,
+                    distortionCoefficients,
+                    rotationVector,
+                    translationVector);
                 //info.Add(calibration);
             }
             catch (Exception error)
