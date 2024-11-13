@@ -407,6 +407,5 @@ namespace LucidArena
             gridCenters.Push(newCenters.ToArray());
             return isFound;
         }
-
     }
 }

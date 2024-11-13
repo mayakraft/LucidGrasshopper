@@ -37,7 +37,8 @@ namespace LucidArena
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddBooleanParameter("Snap Cloud", "Snap", "Toggle input to capture the point cloud", GH_ParamAccess.item);
-            
+            pManager.AddNumberParameter("Filter Confidence", "Filter by Confidence", "Filter points based on the sensor confidence", GH_ParamAccess.item);
+
             pManager.AddIntervalParameter("Filter X Range", "X Range", "Filter to include only points within this range", GH_ParamAccess.item);
             pManager.AddIntervalParameter("Filter Y Range", "Y Range", "Filter to include only points within this range", GH_ParamAccess.item);
             pManager.AddIntervalParameter("Filter Z Range", "Z Range", "Filter to include only points within this range", GH_ParamAccess.item);
@@ -58,6 +59,7 @@ namespace LucidArena
             pManager[6].Optional = true;
             pManager[7].Optional = true;
             pManager[8].Optional = true;
+            pManager[9].Optional = true;
         }
 
         /// <summary>
@@ -66,8 +68,9 @@ namespace LucidArena
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
             pManager.AddTextParameter("Status", "Status", "Device Information", GH_ParamAccess.item);
-            pManager.AddPointParameter("Points", "Points", "List of points composing the point cloud", GH_ParamAccess.list);
-            pManager.AddNumberParameter("Intensity", "Intensity", "List of intensities for each point", GH_ParamAccess.list);
+            //pManager.AddPointParameter("Points", "Points", "List of points composing the point cloud", GH_ParamAccess.list);
+            //pManager.AddNumberParameter("Intensity", "Intensity", "List of intensities for each point", GH_ParamAccess.list);
+            pManager.AddGeometryParameter("Point Cloud", "Cloud", "A Rhino Geometry Point Cloud with points, no colors", GH_ParamAccess.item);
         }
 
         /// <summary>
@@ -78,6 +81,7 @@ namespace LucidArena
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             var snapPhoto = false;
+            var confidence = 0.0;
             var xInterval = Interval.Unset;
             var yInterval = Interval.Unset;
             var zInterval = Interval.Unset;
@@ -90,17 +94,20 @@ namespace LucidArena
             var info = new List<string>();
             var points = new List<Point3d>();
             var intensities = new List<int>();
+            var cloud = new PointCloud();
 
             DA.GetData(0, ref snapPhoto);
-            DA.GetData(1, ref xInterval);
-            DA.GetData(2, ref yInterval);
-            DA.GetData(3, ref zInterval);
+            DA.GetData(1, ref confidence);
 
-            DA.GetData(4, ref exposureTime);
-            DA.GetData(5, ref conversionGain);
-            DA.GetData(6, ref imageAccumulation);
-            DA.GetData(7, ref spatialFilter);
-            DA.GetData(8, ref confidenceThreshold);
+            DA.GetData(2, ref xInterval);
+            DA.GetData(3, ref yInterval);
+            DA.GetData(4, ref zInterval);
+
+            DA.GetData(5, ref exposureTime);
+            DA.GetData(6, ref conversionGain);
+            DA.GetData(7, ref imageAccumulation);
+            DA.GetData(8, ref spatialFilter);
+            DA.GetData(9, ref confidenceThreshold);
 
             var settings = new HeliosSettings();
             if (exposureTime != string.Empty) { settings.exposureTime = exposureTime; }
@@ -132,27 +139,36 @@ namespace LucidArena
                 DA.AbortComponentSolution();
             }
 
+            if (confidence != 0.0)
+            {
+                points = points
+                    .Where((point, i) => intensities[i] > confidence)
+                    .ToList();
+            }
+
             // if the interval is valid, the user has connected an interval to the component input
             // filter the output data.
             if (xInterval.IsValid)
             {
-                intensities = intensities.Where((_, i) => xInterval.IncludesParameter(points[i].X)).ToList();
+                //intensities = intensities.Where((_, i) => xInterval.IncludesParameter(points[i].X)).ToList();
                 points = points.Where(point => xInterval.IncludesParameter(point.X)).ToList();
             }
             if (yInterval.IsValid)
             {
-                intensities = intensities.Where((_, i) => yInterval.IncludesParameter(points[i].Y)).ToList();
+                //intensities = intensities.Where((_, i) => yInterval.IncludesParameter(points[i].Y)).ToList();
                 points = points.Where(point => yInterval.IncludesParameter(point.Y)).ToList();
             }
             if (zInterval.IsValid)
             {
-                intensities = intensities.Where((_, i) => zInterval.IncludesParameter(points[i].Z)).ToList();
+                //intensities = intensities.Where((_, i) => zInterval.IncludesParameter(points[i].Z)).ToList();
                 points = points.Where(point => zInterval.IncludesParameter(point.Z)).ToList();
             }
 
+            cloud.AddRange(points);
+
             DA.SetData(0, $"{settings}");
-            DA.SetDataList(1, points);
-            DA.SetDataList(2, intensities);
+            //DA.SetDataList(1, points);
+            DA.SetData(1, cloud);
         }
 
         /// <summary>

@@ -48,9 +48,9 @@ namespace LucidArena
         {
             pManager.AddTextParameter("Status", "Status", "Device Information", GH_ParamAccess.item);
             pManager.AddNumberParameter("Camera Matrix", "Camera Matrix", "the camera's Matrix", GH_ParamAccess.list);
-            pManager.AddNumberParameter("Distance Coefficients", "Dist Coeffs", "the camera's distance coefficients", GH_ParamAccess.list);
-            pManager.AddGenericParameter("cv::Mat Camera Matrix", "Raw Camera Matrix", "the camera's Matrix", GH_ParamAccess.item);
-            pManager.AddGenericParameter("cv::Mat Distance Coefficients", "Raw Dist Coeffs", "the camera's distance coefficients", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Distortion Coefficients", "Dist Coeffs", "the camera's distortion coefficients", GH_ParamAccess.list);
+            //pManager.AddGenericParameter("cv::Mat Camera Matrix", "Raw Camera Matrix", "the camera's Matrix", GH_ParamAccess.item);
+            //pManager.AddGenericParameter("cv::Mat Distortion Coefficients", "Raw Dist Coeffs", "the camera's distortion coefficients", GH_ParamAccess.item);
         }
 
         /// <summary>
@@ -89,8 +89,8 @@ namespace LucidArena
                 info.Add(calculationInfo);
                 DA.SetDataList(1, cameraMatrix.GetData());
                 DA.SetDataList(2, distCoeffs.GetData());
-                DA.SetData(3, cameraMatrix);
-                DA.SetData(4, distCoeffs);
+                //DA.SetData(3, cameraMatrix);
+                //DA.SetData(4, distCoeffs);
             }
             catch (Exception error)
             {

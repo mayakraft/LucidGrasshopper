@@ -24,9 +24,6 @@ namespace LucidArena
 {
     internal class ColorCloud
     {
-        const String TAB1 = "  ";
-        const String TAB2 = "    ";
-
         // Helios RGB: Overlay
         //    This example is part 3 of a 3-part example on color overlay over 3D images.
         //    With the system calibrated, we can now remove the calibration target from
@@ -41,24 +38,13 @@ namespace LucidArena
         //    col) position for each 3D point. We can sample the Triton image at
         //    that(row, col) position to find the 3D point's RGB value.
 
-        // =-=-=-=-=-=-=-=-=-
-        // =-=- SETTINGS =-=-
-        // =-=-=-=-=-=-=-=-=-
-
-        // image timeout
-        const UInt32 TIMEOUT = 200;
-
-        // orientation values file name
-        const String FILE_NAME_IN = "orientation.yml";
-
-        // file name
-        const String FILE_NAME_OUT = "Images\\Cpp_HLTRGB_3_Overlay.ply";
-
-        // =-=-=-=-=-=-=-=-=-
-        // =-=- EXAMPLE -=-=-
-        // =-=-=-=-=-=-=-=-=-
-
-        public static (List<Point3d> points, List<int> intensities, List<Color4f> colors) CaptureImageAndCloud(ArenaNET.IDevice deviceTRI, ArenaNET.IDevice deviceHLT)
+        public static (List<Point3d> points, List<int> intensities, List<Color4f> colors) CaptureImageAndCloud(
+            ArenaNET.IDevice deviceTRI,
+            ArenaNET.IDevice deviceHLT,
+            Mat cameraMatrix,
+            Mat distCoeffs,
+            Mat rotationVector,
+            Mat translationVector)
         {
             // get node values that will be changed in order to return their values at
             // the end of the example
@@ -68,22 +54,8 @@ namespace LucidArena
             var pixelFormatNodeHLT = (ArenaNET.IEnumeration)deviceTRI.NodeMap.GetNode("PixelFormat");
             String pixelFormatInitialHLT = pixelFormatNodeHLT.Entry.Symbolic;
 
-            // Read in camera matrix, distance coefficients, and rotation and translation vectors
-            Mat cameraMatrix = new Mat();
-            Mat distCoeffs = new Mat();
-            Mat rotationVector = new Mat();
-            Mat translationVector = new Mat();
-
-            FileStorage fs = new FileStorage(FILE_NAME_IN, FileStorage.Mode.Read);
-            fs.GetNode("cameraMatrix").ReadMat(cameraMatrix);
-            fs.GetNode("distCoeffs").ReadMat(distCoeffs);
-            fs.GetNode("rotationVector").ReadMat(rotationVector);
-            fs.GetNode("translationVector").ReadMat(translationVector);
-
-            fs.Dispose();
-
             // Get an image from Helios2
-            Console.WriteLine("{0}Get and prepare HLT image", TAB1);
+            //Console.WriteLine("{0}Get and prepare HLT image", TAB1);
 
             ArenaNET.IImage imageHLT = null;
             Mat imageMatrixXYZ = new Mat();
@@ -101,35 +73,21 @@ namespace LucidArena
 
             var (points, intensities) = GetPointCloudUnsigned(data, sizeHLT, srcPixelSize, (float)scale, (float)scale, (float)scale, (float)offsetX, (float)offsetY, (float)offsetZ);
 
-            CvInvoke.Imwrite(FILE_NAME_OUT + "XYZ.jpg", imageMatrixXYZ);
-
-            // Get an image from Triton
-            Console.WriteLine("{0}Get and prepare TRI image", TAB1);
+            //CvInvoke.Imwrite(FILE_NAME_OUT + "XYZ.jpg", imageMatrixXYZ);
 
             ArenaNET.IImage imageTRI = null;
             Mat imageMatrixRGB = new Mat();
             GetImageTRI(deviceTRI, ref imageTRI, ref imageMatrixRGB);
-            CvInvoke.Imwrite(FILE_NAME_OUT + "RGB.jpg", imageMatrixRGB);
-
-            // Overlay RGB color data onto 3D XYZ points
-            Console.WriteLine("{0}Overlay the RGB color data onto the 3D XYZ points", TAB1);
-
-            // reshape image matrix
-            Console.WriteLine("{0}Reshape XYZ matrix", TAB2);
+            //CvInvoke.Imwrite(FILE_NAME_OUT + "RGB.jpg", imageMatrixRGB);
 
             int size = imageMatrixXYZ.Rows * imageMatrixXYZ.Cols;
             Mat xyzPoints = imageMatrixXYZ.Reshape(3, size);
-
-            // project points
-            Console.WriteLine("{0}Project points", TAB2);
 
             Mat projectedPointsTRI = new Mat();
 
             CvInvoke.ProjectPoints(xyzPoints, rotationVector, translationVector, cameraMatrix, distCoeffs, projectedPointsTRI);
 
             // loop through projected points to access RGB data at those points
-            Console.WriteLine("{0}Get values at projected points", TAB2);
-
             byte[] colorData = new byte[width * height * 3];
             Image<Bgr, byte> rgbImg = imageMatrixRGB.ToImage<Bgr, byte>();
 
@@ -162,43 +120,10 @@ namespace LucidArena
                 colors.Add(new Color4f(R, G, B, 1.0f));
             }
 
-            // save result
-            Console.WriteLine("{0}Save image to {1}", TAB1, FILE_NAME_OUT);
-
-            // prepare to save
-            SaveNET.ImageParams parameters = new SaveNET.ImageParams(
-                imageHLT.Width,
-                imageHLT.Height,
-                imageHLT.BitsPerPixel,
-                true);
-
-            SaveNET.ImageWriter plyWriter = new SaveNET.ImageWriter(parameters, FILE_NAME_OUT);
-
-            // save .ply with color data
-            bool filterPoints = true;
-            bool isSignedPixelFormat = false;
-
-            plyWriter.SetPly(".ply", filterPoints, isSignedPixelFormat, (float)scale, (float)offsetX, (float)offsetY, (float)offsetZ);
-
-            plyWriter.Save(imageHLT.DataArray, colorData);
-
             // return nodes to their initial values
             pixelFormatNodeTRI.FromString(pixelFormatInitialTRI);
             pixelFormatNodeHLT.FromString(pixelFormatInitialHLT);
 
-            // =-=-=-=-=-=-=-=-=-
-            // =-  CLEAN UP  =-=-
-            // =-=-=-=-=-=-=-=-=-
-
-            //if (deviceTRI != null)
-            //{
-            //    system.DestroyDevice(deviceTRI);
-            //}
-
-            //if (deviceHLT != null)
-            //{
-            //    system.DestroyDevice(deviceHLT);
-            //}
             return (points, intensities, colors);
         }
 

@@ -38,10 +38,10 @@ namespace LucidArena
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddBooleanParameter("Calibrate", "Calibrate", "Make a calibration between Triton and Helios", GH_ParamAccess.item);
-            //pManager.AddNumberParameter("Lucid Matrix", "LucidMat", "the result of calibrating the Triton Camera", GH_ParamAccess.list);
-            //pManager.AddNumberParameter("Lucid Distortion Coefficients", "Distortion", "the result of calibrating the Triton Camera", GH_ParamAccess.list);
-            pManager.AddGenericParameter("Lucid Matrix", "LucidMat", "the result of calibrating the Triton Camera", GH_ParamAccess.item);
-            pManager.AddGenericParameter("Lucid Distortion Coefficients", "Distortion", "the result of calibrating the Triton Camera", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Triton Matrix", "TritonMat", "the result of calibrating the Triton Camera", GH_ParamAccess.list);
+            pManager.AddNumberParameter("Triton Distortion Coefficients", "Distortion", "the result of calibrating the Triton Camera", GH_ParamAccess.list);
+            //pManager.AddGenericParameter("cv::Mat Triton Matrix", "RAW TritonMat", "the result of calibrating the Triton Camera", GH_ParamAccess.item);
+            //pManager.AddGenericParameter("cv::Mat Triton Distortion RAW Coefficients", "Distortion", "the result of calibrating the Triton Camera", GH_ParamAccess.item);
             pManager[0].Optional = true;
             pManager[1].Optional = true;
             pManager[2].Optional = true;
@@ -55,8 +55,8 @@ namespace LucidArena
             pManager.AddTextParameter("Status", "Status", "Device Information", GH_ParamAccess.item);
             pManager.AddNumberParameter("Translation", "Translation", "the translation component between the two cameras", GH_ParamAccess.list);
             pManager.AddNumberParameter("Rotation", "Rotation", "the rotation component between the two cameras", GH_ParamAccess.list);
-            pManager.AddGenericParameter("cv::Mat Translation", "Raw Translation", "the translation component between the two cameras", GH_ParamAccess.item);
-            pManager.AddGenericParameter("cv::Mat Rotation", "Raw Rotation", "the rotation component between the two cameras", GH_ParamAccess.item);
+            //pManager.AddGenericParameter("cv::Mat Translation", "Raw Translation", "the translation component between the two cameras", GH_ParamAccess.item);
+            //pManager.AddGenericParameter("cv::Mat Rotation", "Raw Rotation", "the rotation component between the two cameras", GH_ParamAccess.item);
         }
 
         /// <summary>
@@ -70,16 +70,16 @@ namespace LucidArena
             Array translationArray = Array.CreateInstance(typeof(double), 0);
             Array rotationArray = Array.CreateInstance(typeof(double), 0);
             List<string> info = new List<string>();
-            //List<double> calibMat = new List<double> { 1, 0, 0, 0, 1, 0, 0, 0, 1};
-            //List<double> distCoef = new List<double>();
-            Mat calibrationMatrix = new Mat(4, 4, Emgu.CV.CvEnum.DepthType.Cv8U, 1);
-            Mat distanceCoefficients = new Mat(4, 4, Emgu.CV.CvEnum.DepthType.Cv8U, 1);
+            List<double> calibMat = new List<double> { 1, 0, 0, 0, 1, 0, 0, 0, 1};
+            List<double> distCoef = new List<double> { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+            // Mat calibrationMatrix = new Mat(3, 3, Emgu.CV.CvEnum.DepthType.Cv8U, 1);
+            // Mat distortionCoefficients = new Mat(1, 14, Emgu.CV.CvEnum.DepthType.Cv8U, 1);
 
             DA.GetData(0, ref snapPhoto);
-            //DA.GetData(1, ref calibMat);
-            //DA.GetData(2, ref distCoef);
-            DA.GetData(1, ref calibrationMatrix);
-            DA.GetData(2, ref distanceCoefficients);
+            DA.GetData(1, ref calibMat);
+            DA.GetData(2, ref distCoef);
+            // DA.GetData(1, ref calibrationMatrix);
+            // DA.GetData(2, ref distortionCoefficients);
 
             var tritonDevices = LucidManager.devices.Where(device => {
                 String deviceModelName = ((ArenaNET.IString)device.NodeMap.GetNode("DeviceModelName")).Value;
@@ -103,11 +103,18 @@ namespace LucidArena
 
             try
             {
-                var (translation, rotation) = CalculateAndSaveOrientationValues(tritonDevices[0], heliosDevices[0], calibrationMatrix, distanceCoefficients);
+                Mat calibrationMatrix = new Mat(3, 3, Emgu.CV.CvEnum.DepthType.Cv64F, 1);
+                Mat distortionCoefficients = new Mat(1, 14, Emgu.CV.CvEnum.DepthType.Cv64F, 1);
+                calibrationMatrix.SetTo(calibMat.ToArray());
+                distortionCoefficients.SetTo(distCoef.ToArray());
+
+                calibrationMatrix.Reshape(3, 3);
+
+                var (translation, rotation) = CalculateAndSaveOrientationValues(tritonDevices[0], heliosDevices[0], calibrationMatrix, distortionCoefficients);
                 DA.SetDataList(1, translation.GetData());
                 DA.SetDataList(2, rotation.GetData());
-                DA.SetData(3, translation);
-                DA.SetData(4, rotation);
+                //DA.SetData(3, translation);
+                //DA.SetData(4, rotation);
             }
             catch (Exception error)
             {
