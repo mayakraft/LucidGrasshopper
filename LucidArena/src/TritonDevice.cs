@@ -82,8 +82,20 @@ namespace LucidArena
 
         public static (ArenaNET.IImage, Mat, int, int) TakePhoto(ArenaNET.IDevice device, out string info)
         {
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+            {
+                var pixelFormatNodeTRI = (ArenaNET.IEnumeration)device.NodeMap.GetNode("PixelFormat");
+                pixelFormatNodeTRI.FromString("RGB8");
+            }
+            else if (Environment.OSVersion.Platform == PlatformID.Unix || Environment.OSVersion.Platform == PlatformID.MacOSX)
+            {
+                var pixelFormatNodeTRI = (ArenaNET.IEnumeration)device.NodeMap.GetNode("PixelFormat");
+                pixelFormatNodeTRI.FromString("BGR8");
+            }
+
             info = string.Empty;
-            ArenaNET.IImage image = device.GetImage(TIMEOUT);
+            device.StartStream();
+            ArenaNET.IImage image = device.GetImage(2000);
             Size imageSize = new Size();
             if (image == null)
                 throw new Exception("Incomplete image");
@@ -93,12 +105,17 @@ namespace LucidArena
             imageSize.Height = height;
 
             // copy data into an OpenCV matrix
-            Mat imageMatrix = new Mat(imageSize.Height, imageSize.Width, DepthType.Cv8U, 1);
-            imageMatrix.SetTo(new Gray(0).MCvScalar);
-            Byte[] imageData = image.DataArray;
-            Marshal.Copy(imageData, 0, imageMatrix.DataPointer, width * height);
+            // Mat imageMatrix = new Mat(imageSize.Height, imageSize.Width, DepthType.Cv8U, 3);
+            // imageMatrix.SetTo(new Gray(0).MCvScalar);
+            // Byte[] imageData = image.DataArray;
+            // Marshal.Copy(imageData, 0, imageMatrix.DataPointer, width * height);
+
+            Mat imageMatrix = new Mat(height, width, DepthType.Cv8U, 3);
+            Marshal.Copy(image.DataArray, 0, imageMatrix.DataPointer, height * width * 3);
 
             device.RequeueBuffer(image);
+            device.StopStream();
+
             return (image, imageMatrix, width, height);
         }
 

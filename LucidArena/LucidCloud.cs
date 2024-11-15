@@ -130,12 +130,23 @@ namespace LucidArena
                     rotationVector,
                     translationVector);
 
+                info.Add($"points: {points.Count}");
+                info.Add($"colors: {colors.Count}");
+                info.Add($"intensities: {intensities.Count}");
+
+                var elementCount = Math.Min(Math.Min(points.Count, colors.Count), intensities.Count);
+
                 // filter by intensity
-                var drawingColors = colors
+                // var drawingColors = colors
+                var drawingColors = Enumerable.Range(0, elementCount)
+                    .Select((_, i) => colors[i])
                     .Where((_, i) => intensities[i] > threshhold)
                     .Select(color => color.AsSystemColor())
                     .ToList();
-                points = points
+                
+                // points = points
+                points = Enumerable.Range(0, elementCount)
+                    .Select((_, i) => points[i])
                     .Where((_, i) => intensities[i] > threshhold)
                     .ToList();
 
